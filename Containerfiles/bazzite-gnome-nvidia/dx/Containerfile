@@ -1,0 +1,23 @@
+## 1. BUILD ARGS
+ARG SOURCE_IMAGE="bazzite-gnome-nvidia"
+ARG SOURCE_SUFFIX="-main"
+ARG SOURCE_TAG="stable"
+
+### 2. SOURCE IMAGE
+FROM ghcr.io/ublue-os/${SOURCE_IMAGE}${SOURCE_SUFFIX}:${SOURCE_TAG}
+
+### 3. MODIFICATIONS
+COPY tuxedo.repo /etc/yum.repos.d/tuxedo.repo
+COPY fixtuxedo /usr/bin/fixtuxedo
+COPY fixtuxedo.service /etc/systemd/system/fixtuxedo.service
+
+# Copy all build scripts
+COPY build-base.sh /tmp/build-base.sh
+COPY build_tuxedo.sh /tmp/build_tuxedo.sh
+
+# Make scripts executable and run all installations in one layer
+RUN chmod +x /tmp/build-base.sh /tmp/build_tuxedo.sh && \
+    mkdir -p /var/lib/alternatives && \
+    /tmp/build-base.sh && \
+    /tmp/build_tuxedo.sh && \
+    ostree container commit

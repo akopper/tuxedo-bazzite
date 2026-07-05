@@ -1,0 +1,6 @@
+# This file is completely optional, but if you want to index your image on https://artifacthub.io/ you can 
+# Sign up and add the Repository ID to the right field. Owners fields are optional.
+
+repositoryID: tuxedo-bazzite
+owners:
+  - name: akopper
