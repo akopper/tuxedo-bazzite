@@ -18,6 +18,8 @@ COPY build_tuxedo.sh /tmp/build_tuxedo.sh
 # Make scripts executable and run all installations in one layer
 RUN chmod +x /tmp/build-base.sh /tmp/build_tuxedo.sh && \
     mkdir -p /var/lib/alternatives && \
+    RELEASE="$(rpm -E %fedora)" && \
+    sed -i "s/FEDORA_VERSION_PLACEHOLDER/${RELEASE}/g" /etc/yum.repos.d/tuxedo.repo && \
     /tmp/build-base.sh && \
     /tmp/build_tuxedo.sh && \
     ostree container commit
