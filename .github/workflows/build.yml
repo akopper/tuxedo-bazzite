@@ -16,10 +16,9 @@ on:
 env:
   IMAGE_DESC: "Bazzite with Tuxedo drivers (TCC + kmod) for Tuxedo/Clevo laptops"
   IMAGE_REGISTRY: "ghcr.io/${{ github.repository_owner }}"
-  ARTIFACTHUB_LOGO_URL: "https://avatars.githubusercontent.com/u/120078124?s=200&v=4"
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref || github.run_id }}-${{ inputs.brand_name}}-${{ inputs.stream_name }}
+  group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
   cancel-in-progress: true
 
 jobs:
@@ -35,33 +34,19 @@ jobs:
       - name: Find Containerfiles and create matrix
         id: set-matrix
         run: |
-          # Find all Containerfile files under the Containerfiles directory.
           files=$(find Containerfiles -type f -name Containerfile)
           echo "Found containerfiles:"
           echo "$files"
 
           matrix_entries="[]"
           while IFS= read -r file; do
-            # Remove the leading "Containerfiles/" part.
             relative=${file#Containerfiles/}
             dir=$(dirname "$relative")
-            
-            # Split the directory path into parts.
             IFS='/' read -r -a parts <<< "$dir"
             
-            # Build image name based on hierarchical structure
-            # Format: tuxedo-{base}-{variant}
-            # Examples:
-            #   bazzite/dx       -> tuxedo-bazzite
-            #   bazzite-gnome/dx -> tuxedo-bazzite-gnome
-            #   bazzite-nvidia/dx -> tuxedo-bazzite-nvidia
-            
             if [ ${#parts[@]} -eq 2 ]; then
-              # Two-level structure: base/variant
               base="${parts[0]}"
               variant="${parts[1]}"
-              
-              # Map variant names to final image names
               case "$variant" in
                 "dx")
                   image_name="tuxedo-${base}"
@@ -77,24 +62,20 @@ jobs:
                   ;;
               esac
             else
-              # Fallback: join all parts with hyphen for any other structure
               joined=$(IFS=-; echo "${parts[*]}")
               image_name="tuxedo-${joined}"
             fi
             
-            # Build a JSON entry for this Containerfile.
             entry=$(jq -n --arg ctx "." --arg file "$file" --arg name "$image_name" '{context: $ctx, containerfile: $file, image_name: $name}')
             matrix_entries=$(echo "$matrix_entries" | jq --argjson entry "$entry" '. + [$entry]')
           done <<< "$files"
 
           echo "Matrix is:"
           echo "$matrix_entries"
-          # If no Containerfile was found (matrix_entries is still []), exit with error.
           if [ "$matrix_entries" = "[]" ]; then
             echo "No Containerfiles found. Exiting."
             exit 1
           fi
-          # Set the output using the GITHUB_OUTPUT file variable.
           echo "matrix<<EOF" >> "$GITHUB_OUTPUT"
           echo "$matrix_entries" >> "$GITHUB_OUTPUT"
           echo "EOF" >> "$GITHUB_OUTPUT"
@@ -108,17 +89,17 @@ jobs:
       matrix:
         include: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
       fail-fast: false
+      max-parallel: 1
     permissions:
       contents: read
       packages: write
       id-token: write
-    env:
-      IMAGE_DESC: "Bazzite with Tuxedo drivers (TCC + kmod) for Tuxedo/Clevo laptops"
-      IMAGE_REGISTRY: "ghcr.io/${{ github.repository_owner }}"
-      ARTIFACTHUB_LOGO_URL: "https://avatars.githubusercontent.com/u/120078124?s=200&v=4"
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+
+      - name: Free Disk Space (Ubuntu)
+        uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1
 
       - name: Get current date
         id: date
@@ -133,23 +114,12 @@ jobs:
             type=raw,value=latest
             type=raw,value=latest.{{date 'YYYYMMDD'}}
             type=raw,value={{date 'YYYYMMDD'}}
-            type=sha,enable=${{ github.event_name == 'pull_request' }}
-            type=ref,event=pr
           labels: |
-            io.artifacthub.package.readme-url=https://raw.githubusercontent.com/${{ github.repository_owner }}/tuxedo-bazzite/refs/heads/main/README.md
             org.opencontainers.image.created=${{ steps.date.outputs.date }}
             org.opencontainers.image.description=${{ env.IMAGE_DESC }}
-            org.opencontainers.image.documentation=https://raw.githubusercontent.com/${{ github.repository_owner }}/tuxedo-bazzite/refs/heads/main/README.md
-            org.opencontainers.image.source=https://github.com/${{ github.repository_owner }}/tuxedo-bazzite/blob/main/Containerfile
             org.opencontainers.image.title=${{ matrix.image_name }}
-            org.opencontainers.image.url=https://github.com/${{ github.repository_owner }}/tuxedo-bazzite
             org.opencontainers.image.vendor=${{ github.repository_owner }}
             org.opencontainers.image.version=latest
-            io.artifacthub.package.deprecated=false
-            io.artifacthub.package.keywords=bootc,ublue,universal-blue,bazzite,tuxedo
-            io.artifacthub.package.license=Apache-2.0
-            io.artifacthub.package.logo-url=${{ env.ARTIFACTHUB_LOGO_URL }}
-            io.artifacthub.package.prerelease=false
             containers.bootc=1
           sep-tags: " "
           sep-annotations: " "
@@ -209,6 +179,4 @@ jobs:
             cosign sign -y --key env://COSIGN_PRIVATE_KEY $IMAGE_FULL:$tag
           done
         env:
-          TAGS: ${{ steps.push.outputs.digest }}
-          COSIGN_EXPERIMENTAL: false
           COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
