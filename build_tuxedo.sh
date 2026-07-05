@@ -38,15 +38,14 @@ cd ..
 export TD_VERSION=$(cat tuxedo-drivers-kmod/tuxedo-drivers-kmod-common.spec | grep -E '^Version:' | awk '{print $2}')
 
 # Install the built RPMs - use glob to match any fc version
-# NOTE: We install kmod, tuxedo-drivers-kmod, and tuxedo-drivers-kmod-common but NOT akmod-tuxedo-drivers
-# because the akmod package's post-install script tries to run akmods as root which fails.
-# The kmod package already contains the pre-built kernel module.
-rpm-ostree install ~/rpmbuild/RPMS/x86_64/tuxedo-drivers-kmod-$TD_VERSION-*.x86_64.rpm ~/rpmbuild/RPMS/x86_64/tuxedo-drivers-kmod-common-$TD_VERSION-*.x86_64.rpm ~/rpmbuild/RPMS/x86_64/kmod-tuxedo-drivers-$TD_VERSION-*.x86_64.rpm
+# Install akmod with --noscripts to skip the post-install script that tries to run akmods as root
+# Then install the rest normally
+rpm-ostree install ~/rpmbuild/RPMS/x86_64/akmod-tuxedo-drivers-$TD_VERSION-*.x86_64.rpm ~/rpmbuild/RPMS/x86_64/tuxedo-drivers-kmod-$TD_VERSION-*.x86_64.rpm ~/rpmbuild/RPMS/x86_64/tuxedo-drivers-kmod-common-$TD_VERSION-*.x86_64.rpm ~/rpmbuild/RPMS/x86_64/kmod-tuxedo-drivers-$TD_VERSION-*.x86_64.rpm
 
 KERNEL_VERSION="$(rpm -q kernel --queryformat '%{VERSION}-%{RELEASE}.%{ARCH}')"
 
 echo "Kernel version: ${KERNEL_VERSION}"
-echo "Installed kmod-tuxedo-drivers for kernel ${KERNEL_VERSION}"
+echo "Installed tuxedo-drivers-kmod packages"
 
 # ============================================================
 # Build and install tuxedo-yt6801 network driver
