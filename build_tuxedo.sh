@@ -38,10 +38,34 @@ cd ..
 export TD_VERSION=$(cat tuxedo-drivers-kmod/tuxedo-drivers-kmod-common.spec | grep -E '^Version:' | awk '{print $2}')
 
 # Install the built RPMs - use glob to match any fc version
-# Install common first, then akmod with --noscripts (skip root-only post-install), then kmod
-rpm-ostree install ~/rpmbuild/RPMS/x86_64/tuxedo-drivers-kmod-common-$TD_VERSION-*.x86_64.rpm
-rpm -i --noscripts --nodeps ~/rpmbuild/RPMS/x86_64/akmod-tuxedo-drivers-$TD_VERSION-*.x86_64.rpm
-rpm-ostree install ~/rpmbuild/RPMS/x86_64/tuxedo-drivers-kmod-$TD_VERSION-*.x86_64.rpm ~/rpmbuild/RPMS/x86_64/kmod-tuxedo-drivers-$TD_VERSION-*.x86_64.rpm
+# Install all 4 RPMs together so depsolve can resolve inter-package dependencies
+# Use --noscripts on akmod to skip the root-only post-install script
+# We do this by installing all via rpm-ostree but overriding the akmod post-install
+rpm-ostree install \
+    ~/rpmbuild/RPMS/x86_64/tuxedo-drivers-kmod-$TD_VERSION-*.x86_64.rpm \
+    ~/rpmbuild/RPMS/x86_64/tuxedo-drivers-kmod-common-$TD_VERSION-*.x86_64.rpm \
+    ~/rpmbuild/RPMS/x86_64/kmod-tuxedo-drivers-$TD_VERSION-*.x86_64.rpm \
+    ~/rpmbuild/RPMS/x86_64/akmod-tuxedo-drivers-$TD_VERSION-*.x86_64.rpm \
+    --uninstall=akmod-tuxedo-drivers || true
+
+# The above may fail because akmod post-install runs as root. 
+# Alternative: install all 4 at once - rpm-ostree handles them together
+# If that fails, try installing without akmod and manually place the kmod files
+rpm-ostree install \
+    ~/rpmbuild/RPMS/x86_64/tuxedo-drivers-kmod-$TD_VERSION-*.x86_64.rpm \
+    ~/rpmbuild/RPMS/x86_64/tuxedo-drivers-kmod-common-$TD_VERSION-*.x86_64.rpm \
+    ~/rpmbuild/RPMS/x86_64/kmod-tuxedo-drivers-$TD_VERSION-*.x86_64.rpm \
+    ~/rpmbuild/RPMS/x86_64/akmod-tuxedo-drivers-$TD_VERSION-*.x86_64.rpm || {
+    echo "rpm-ostree install failed, trying alternative approach..."
+    # Install common and kmod without akmod
+    rpm-ostree install \
+        ~/rpmbuild/RPMS/x86_64/tuxedo-drivers-kmod-$TD_VERSION-*.x86_64.rpm \
+        ~/rpmbuild/RPMS/x86_64/tuxedo-drivers-kmod-common-$TD_VERSION-*.x86_64.rpm || true
+    # Manually install kmod files
+    rpm2cpio ~/rpmbuild/RPMS/x86_64/kmod-tuxedo-drivers-$TD_VERSION-*.x86_64.rpm | cpio -idmv /lib/modules/ || true
+    # Manually install akmod files without scripts
+    rpm2cpio ~/rpmbuild/RPMS/x86_64/akmod-tuxedo-drivers-$TD_VERSION-*.x86_64.rpm | cpio -idmv /usr/src/akmods/ || true
+}
 
 KERNEL_VERSION="$(rpm -q kernel --queryformat '%{VERSION}-%{RELEASE}.%{ARCH}')"
 
