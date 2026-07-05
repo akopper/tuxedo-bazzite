@@ -38,9 +38,10 @@ cd ..
 export TD_VERSION=$(cat tuxedo-drivers-kmod/tuxedo-drivers-kmod-common.spec | grep -E '^Version:' | awk '{print $2}')
 
 # Install the built RPMs - use glob to match any fc version
-# Install akmod with --noscripts to skip the post-install script that tries to run akmods as root
-# Then install the rest normally
-rpm-ostree install ~/rpmbuild/RPMS/x86_64/akmod-tuxedo-drivers-$TD_VERSION-*.x86_64.rpm ~/rpmbuild/RPMS/x86_64/tuxedo-drivers-kmod-$TD_VERSION-*.x86_64.rpm ~/rpmbuild/RPMS/x86_64/tuxedo-drivers-kmod-common-$TD_VERSION-*.x86_64.rpm ~/rpmbuild/RPMS/x86_64/kmod-tuxedo-drivers-$TD_VERSION-*.x86_64.rpm
+# Install akmod with rpm --noscripts to skip the post-install script that fails as root
+# Then install the rest with rpm-ostree (kmod requires akmod as dependency)
+rpm -i --noscripts ~/rpmbuild/RPMS/x86_64/akmod-tuxedo-drivers-$TD_VERSION-*.x86_64.rpm
+rpm-ostree install ~/rpmbuild/RPMS/x86_64/tuxedo-drivers-kmod-$TD_VERSION-*.x86_64.rpm ~/rpmbuild/RPMS/x86_64/tuxedo-drivers-kmod-common-$TD_VERSION-*.x86_64.rpm ~/rpmbuild/RPMS/x86_64/kmod-tuxedo-drivers-$TD_VERSION-*.x86_64.rpm
 
 KERNEL_VERSION="$(rpm -q kernel --queryformat '%{VERSION}-%{RELEASE}.%{ARCH}')"
 
