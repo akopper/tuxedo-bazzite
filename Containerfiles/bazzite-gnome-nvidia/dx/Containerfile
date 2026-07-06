@@ -8,6 +8,10 @@ ARG AKMODS_PUBLIC_KEY_B64=""
 ### 2. SOURCE IMAGE
 FROM ghcr.io/ublue-os/${SOURCE_IMAGE}${SOURCE_SUFFIX}:${SOURCE_TAG}
 
+# Re-declare build args after FROM (ARGs before FROM are only for FROM itself)
+ARG AKMODS_PRIVATE_KEY_B64
+ARG AKMODS_PUBLIC_KEY_B64
+
 ### 3. MODIFICATIONS
 COPY tuxedo.repo /etc/yum.repos.d/tuxedo.repo
 COPY fixtuxedo /usr/bin/fixtuxedo
