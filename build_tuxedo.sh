@@ -105,9 +105,13 @@ if [ -x "/lib/modules/${KERNEL_VERSION}/build/scripts/sign-file" ]; then
     echo "Signing tuxedo-drivers modules for Secure Boot..."
     SIGN_KEY="/etc/pki/akmods/private/private_key.priv"
     SIGN_CERT="/etc/pki/akmods/certs/public_key.der"
-    find "${MODULE_INSTALL_DIR}" -name "*.ko" -exec \
-        /lib/modules/${KERNEL_VERSION}/build/scripts/sign-file sha256 "${SIGN_KEY}" "${SIGN_CERT}" {} \;
-    echo "tuxedo-drivers modules signed"
+    if [ -f "${SIGN_KEY}" ] && [ -f "${SIGN_CERT}" ]; then
+        find "${MODULE_INSTALL_DIR}" -name "*.ko" -exec \
+            /lib/modules/${KERNEL_VERSION}/build/scripts/sign-file sha256 "${SIGN_KEY}" "${SIGN_CERT}" {} \;
+        echo "tuxedo-drivers modules signed"
+    else
+        echo "WARNING: Signing keys not found, skipping module signing"
+    fi
     # Compress signed modules
     find "${MODULE_INSTALL_DIR}" -name "*.ko" -exec xz -f {} \;
 fi
@@ -157,9 +161,13 @@ if [ -x "/lib/modules/${KERNEL_VERSION}/build/scripts/sign-file" ]; then
     echo "Signing yt6801 module for Secure Boot..."
     SIGN_KEY="/etc/pki/akmods/private/private_key.priv"
     SIGN_CERT="/etc/pki/akmods/certs/public_key.der"
-    find "${MODULE_INSTALL_DIR}" -name "*.ko" -exec \
-        /lib/modules/${KERNEL_VERSION}/build/scripts/sign-file sha256 "${SIGN_KEY}" "${SIGN_CERT}" {} \;
-    echo "yt6801 module signed"
+    if [ -f "${SIGN_KEY}" ] && [ -f "${SIGN_CERT}" ]; then
+        find "${MODULE_INSTALL_DIR}" -name "*.ko" -exec \
+            /lib/modules/${KERNEL_VERSION}/build/scripts/sign-file sha256 "${SIGN_KEY}" "${SIGN_CERT}" {} \;
+        echo "yt6801 module signed"
+    else
+        echo "WARNING: Signing keys not found, skipping module signing"
+    fi
     # Compress signed modules
     find "${MODULE_INSTALL_DIR}" -name "*.ko" -exec xz -f {} \;
 fi
