@@ -240,22 +240,22 @@ sed -i 's|/opt/tuxedo-control-center|/usr/share/tuxedo-control-center|g' /etc/sy
 # Polkit policies
 mkdir -p /usr/share/polkit-1/actions
 cp ${DIST_DATA}/com.tuxedocomputers.tccd.policy /usr/share/polkit-1/actions/com.tuxedocomputers.tccd.policy
-cp ${DIST_DATA}/com.tuxedocomputers.tomte.policy /usr/share/polkit-1/actions/com.tuxedocomputers.tomte.policy
+cp ${DIST_DATA}/com.tuxedocomputers.tomte.policy /usr/share/polkit-1/actions/com.tuxedocomputers.tomte.policy 2>/dev/null || true
 
 # DBus config
 mkdir -p /usr/share/dbus-1/system.d
-cp ${DIST_DATA}/com.tuxedocomputers.tccd.conf /usr/share/dbus-1/system.d/com.tuxedocomputers.tccd.conf
+cp ${DIST_DATA}/com.tuxedocomputers.tccd.conf /usr/share/dbus-1/system.d/com.tuxedocomputers.tccd.conf 2>/dev/null || true
 
 # Desktop file
-cp ${DIST_DATA}/tuxedo-control-center.desktop /usr/share/applications/tuxedo-control-center.desktop
+cp ${DIST_DATA}/tuxedo-control-center.desktop /usr/share/applications/tuxedo-control-center.desktop 2>/dev/null || true
 sed -i 's|/opt/tuxedo-control-center|/usr/share/tuxedo-control-center|g' /usr/share/applications/tuxedo-control-center.desktop
 
 # Autostart desktop file
 mkdir -p /etc/skel/.config/autostart
-cp ${DIST_DATA}/tuxedo-control-center-tray.desktop /etc/skel/.config/autostart/tuxedo-control-center-tray.desktop
+cp ${DIST_DATA}/tuxedo-control-center-tray.desktop /etc/skel/.config/autostart/tuxedo-control-center-tray.desktop 2>/dev/null || true
 
 # Udev rules
-cp ${DIST_DATA}/99-webcam.rules /etc/udev/rules.d/99-webcam.rules
+cp ${DIST_DATA}/99-webcam.rules /etc/udev/rules.d/99-webcam.rules 2>/dev/null || true
 
 # Enable services
 systemctl enable tccd.service 2>/dev/null || true
