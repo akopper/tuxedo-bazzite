@@ -1,10 +1,56 @@
 #!/bin/bash
 
-# Check if the symlink already exists
+# ============================================================
+# TUXEDO boot-time fixup script
+# ============================================================
+
+# Create /opt symlink for Tuxedo Control Center
 if [ ! -L "/opt/tuxedo-control-center" ]; then
-    # Create the symlink
-    sudo ln -s /usr/share/tuxedo-control-center /opt/tuxedo-control-center
+    ln -s /usr/share/tuxedo-control-center /opt/tuxedo-control-center
     echo "Tuxedo Control Center linked to /opt directory"
 else
     echo "Tuxedo symlink at /opt already exists, no fix needed"
 fi
+
+# ============================================================
+# Unbind and unload the built-in uniwill_laptop module if it
+# managed to load before the blacklist took effect, then load
+# the tuxedo-drivers modules.
+# ============================================================
+WMI_DEVICE="ABBC0F72-8EA1-11D1-00A0-C90629100000-8"
+
+# Check if uniwill_laptop is loaded
+if lsmod | grep -q "uniwill_laptop"; then
+    echo "uniwill_laptop is loaded, unbinding and removing..."
+
+    # Unbind from the WMI device if bound
+    if [ -d "/sys/bus/wmi/drivers/uniwill_laptop" ]; then
+        if ls /sys/bus/wmi/drivers/uniwill_laptop/ | grep -q "${WMI_DEVICE}"; then
+            echo "${WMI_DEVICE}" > /sys/bus/wmi/drivers/uniwill_laptop/unbind 2>/dev/null || true
+        fi
+    fi
+
+    # Remove the module
+    modprobe -r uniwill_laptop 2>/dev/null || rmmod uniwill_laptop 2>/dev/null || true
+    echo "uniwill_laptop removed"
+fi
+
+# Load tuxedo-drivers modules in the correct order
+# Only load if not already loaded
+if ! lsmod | grep -q "tuxedo_compatibility_check"; then
+    modprobe tuxedo_compatibility_check 2>/dev/null || true
+fi
+if ! lsmod | grep -q "uniwill_wmi"; then
+    modprobe uniwill_wmi 2>/dev/null || true
+fi
+if ! lsmod | grep -q "clevo_wmi"; then
+    modprobe clevo_wmi 2>/dev/null || true
+fi
+if ! lsmod | grep -q "tuxedo_io"; then
+    modprobe tuxedo_io 2>/dev/null || true
+fi
+if ! lsmod | grep -q "tuxedo_keyboard"; then
+    modprobe tuxedo_keyboard 2>/dev/null || true
+fi
+
+echo "Tuxedo boot-time fixup completed"

@@ -1,5 +1,7 @@
 [Unit]
-Description=Run tuxedo script once at startup
+Description=Run tuxedo fixup script at startup
+Before=tccd.service
+After=systemd-modules-load.service
 
 [Service]
 Type=oneshot

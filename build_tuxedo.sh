@@ -21,7 +21,25 @@ chmod +x /usr/bin/fixtuxedo
 systemctl enable /etc/systemd/system/fixtuxedo.service
 
 # ============================================================
-# Inject persistent akmods signing key (prevents kmodgenca from generating a new key)
+# Blacklist the built-in kernel uniwill_laptop module
+# ============================================================
+# The kernel ships a built-in uniwill_laptop module
+# (drivers/platform/x86/uniwill/uniwill-laptop.ko) which claims the
+# ABBC0F72 WMI device via DMI alias matching on TUXEDO boards. This
+# prevents the tuxedo-drivers uniwill_wmi module from binding to the
+# device, causing "probe: At least one Uniwill GUID missing" and TCC
+# to report "interface: inactive". Blacklisting it ensures the
+# tuxedo-drivers module gets exclusive access.
+mkdir -p /usr/lib/modprobe.d
+cat > /usr/lib/modprobe.d/tuxedo-blacklist.conf << 'EOF'
+# Blacklist the built-in kernel uniwill_laptop module so that the
+# tuxedo-drivers uniwill_wmi module can claim the WMI device instead.
+blacklist uniwill_laptop
+EOF
+
+# ============================================================
+# Inject persistent akmods signing key (prevents kmodgenca from
+# generating a new key)
 # The key pair must be enrolled in MOK on the target machine.
 # ============================================================
 if [ -n "${AKMODS_PRIVATE_KEY_B64:-}" ] && [ -n "${AKMODS_PUBLIC_KEY_B64:-}" ]; then
@@ -45,22 +63,52 @@ else
 fi
 
 # ============================================================
-# Install tuxedo-drivers via akmod (triggers akmods-ostree-post to build+sign kmods)
+# Install tuxedo-drivers DKMS source and build kernel modules
 # ============================================================
-# Installing akmod-tuxedo-drivers triggers its %post script which calls
-# akmods-ostree-post, which builds the kmod for the current kernel
-# and signs it with the key at /etc/pki/akmods/certs/public_key.der
-rpm-ostree install akmod-tuxedo-drivers
+# The TUXEDO repo provides a DKMS source package
+# (tuxedo-drivers-*.noarch.rpm) which installs source to
+# /usr/src/tuxedo-drivers-<version>/. There is no
+# akmod-tuxedo-drivers package in the TUXEDO repo for Fedora 44,
+# so we build the modules manually from the DKMS source.
 
-# Verify modules were built
+rpm-ostree install tuxedo-drivers
+
 KERNEL_VERSION="$(rpm -q kernel --queryformat '%{VERSION}-%{RELEASE}.%{ARCH}')"
 echo "Kernel version: ${KERNEL_VERSION}"
-echo "Checking for built tuxedo modules..."
-find /lib/modules/${KERNEL_VERSION}/extra/tuxedo-drivers -name "*.ko.xz" 2>/dev/null || {
-    echo "WARNING: tuxedo-drivers kmod not found after akmod installation"
-    echo "Checking if akmods-ostree-post ran..."
-    find /lib/modules -path "*/tuxedo-drivers/*" -name "*.ko*" 2>/dev/null | head -10
-}
+
+TUXEDO_SRC_DIR="$(ls -d /usr/src/tuxedo-drivers-* 2>/dev/null | head -1)"
+if [ -z "${TUXEDO_SRC_DIR}" ]; then
+    echo "ERROR: tuxedo-drivers source not found in /usr/src/"
+    exit 1
+fi
+echo "Found tuxedo-drivers source at: ${TUXEDO_SRC_DIR}"
+
+echo "Building tuxedo-drivers modules for kernel ${KERNEL_VERSION}..."
+cd "${TUXEDO_SRC_DIR}"
+make V=1 -C "/lib/modules/${KERNEL_VERSION}/build" M="${TUXEDO_SRC_DIR}" modules
+
+MODULE_INSTALL_DIR="/lib/modules/${KERNEL_VERSION}/extra/tuxedo-drivers"
+mkdir -p "${MODULE_INSTALL_DIR}"
+
+# Install all built .ko files
+find "${TUXEDO_SRC_DIR}" -name "*.ko" -exec install -D -m 755 {} "${MODULE_INSTALL_DIR}/" \;
+
+# Sign the modules with the akmods key pair (for Secure Boot)
+if [ -x "/lib/modules/${KERNEL_VERSION}/build/scripts/sign-file" ]; then
+    echo "Signing tuxedo-drivers modules for Secure Boot..."
+    SIGN_KEY="/etc/pki/akmods/private/private_key.priv"
+    SIGN_CERT="/etc/pki/akmods/certs/public_key.der"
+    find "${MODULE_INSTALL_DIR}" -name "*.ko" -exec \
+        /lib/modules/${KERNEL_VERSION}/build/scripts/sign-file sha256 "${SIGN_KEY}" "${SIGN_CERT}" {} \;
+    echo "tuxedo-drivers modules signed"
+    # Compress signed modules
+    find "${MODULE_INSTALL_DIR}" -name "*.ko" -exec xz -f {} \;
+fi
+
+depmod -a "${KERNEL_VERSION}"
+
+echo "Verifying tuxedo-drivers module installation..."
+find /lib/modules/${KERNEL_VERSION}/extra/tuxedo-drivers -name "*.ko*" | head -20
 
 # ============================================================
 # Build and install tuxedo-yt6801 network driver
