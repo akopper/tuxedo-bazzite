@@ -76,7 +76,7 @@ rpm-ostree install cpio
 # Download and extract tuxedo-drivers DKMS source (avoid DKMS postinstall script)
 curl -s -o /tmp/tuxedo-drivers.rpm https://rpm.tuxedocomputers.com/fedora/${RELEASE}/x86_64/base/tuxedo-drivers-4.22.1-1.fc43.noarch.rpm
 mkdir -p /usr/src
-cd /usr/src
+cd /
 rpm2cpio /tmp/tuxedo-drivers.rpm | cpio -idmv
 cd /tmp
 
