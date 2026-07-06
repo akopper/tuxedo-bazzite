@@ -44,6 +44,8 @@ EOF
 # ============================================================
 if [ -n "${AKMODS_PRIVATE_KEY_B64:-}" ] && [ -n "${AKMODS_PUBLIC_KEY_B64:-}" ]; then
     echo "Injecting persistent akmods signing key pair..."
+    mkdir -p /etc/pki/akmods/private /etc/pki/akmods/certs
+    getent group akmods >/dev/null 2>&1 || groupadd -r akmods
 
     # Decode keys from base64
     echo "${AKMODS_PRIVATE_KEY_B64}" | base64 -d > /etc/pki/akmods/private/akmods-persistent.priv
