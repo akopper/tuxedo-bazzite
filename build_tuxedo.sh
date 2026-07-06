@@ -55,8 +55,8 @@ if [ -n "${AKMODS_PRIVATE_KEY_B64:-}" ] && [ -n "${AKMODS_PUBLIC_KEY_B64:-}" ]; 
     chown root:akmods /etc/pki/akmods/private/akmods-persistent.priv
 
     # Point symlinks to our persistent key
-    ln -sf /etc/pki/akmods/private/akmods-persistent.priv /etc/pki/akmods/private/private_key.priv
-    ln -sf /etc/pki/akmods/certs/akmods-persistent.der /etc/pki/akmods/certs/public_key.der
+    ln -sfn /etc/pki/akmods/private/akmods-persistent.priv /etc/pki/akmods/private/private_key.priv
+    ln -sfn /etc/pki/akmods/certs/akmods-persistent.der /etc/pki/akmods/certs/public_key.der
 
     echo "Persistent signing key injected. kmodgenca will reuse this key."
 else
@@ -115,7 +115,7 @@ if [ -x "/lib/modules/${KERNEL_VERSION}/build/scripts/sign-file" ]; then
         echo "WARNING: Signing keys not found, skipping module signing"
     fi
     # Compress signed modules
-    find "${MODULE_INSTALL_DIR}" -name "*.ko" -exec xz -f {} \;
+    find "${MODULE_INSTALL_DIR}" -name "*.ko" -exec xz --check=crc32 -f {} \;
 fi
 
 depmod -a "${KERNEL_VERSION}"
@@ -171,7 +171,7 @@ if [ -x "/lib/modules/${KERNEL_VERSION}/build/scripts/sign-file" ]; then
         echo "WARNING: Signing keys not found, skipping module signing"
     fi
     # Compress signed modules
-    find "${MODULE_INSTALL_DIR}" -name "*.ko" -exec xz -f {} \;
+    find "${MODULE_INSTALL_DIR}" -name "*.ko" -exec xz --check=crc32 -f {} \;
 fi
 
 depmod -a "${KERNEL_VERSION}"
