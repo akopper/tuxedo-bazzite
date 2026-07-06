@@ -1,2 +1,4 @@
 cosign.key
 _build*
+akmods-*.priv
+akmods-*.der

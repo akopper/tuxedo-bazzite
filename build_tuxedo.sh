@@ -21,56 +21,46 @@ chmod +x /usr/bin/fixtuxedo
 systemctl enable /etc/systemd/system/fixtuxedo.service
 
 # ============================================================
-# Build and install tuxedo-drivers-kmod
+# Inject persistent akmods signing key (prevents kmodgenca from generating a new key)
+# The key pair must be enrolled in MOK on the target machine.
 # ============================================================
-export HOME=/tmp
-cd /tmp
+if [ -n "${AKMODS_PRIVATE_KEY_B64:-}" ] && [ -n "${AKMODS_PUBLIC_KEY_B64:-}" ]; then
+    echo "Injecting persistent akmods signing key pair..."
 
-rpmdev-setuptree
+    # Decode keys from base64
+    echo "${AKMODS_PRIVATE_KEY_B64}" | base64 -d > /etc/pki/akmods/private/akmods-persistent.priv
+    echo "${AKMODS_PUBLIC_KEY_B64}" | base64 -d > /etc/pki/akmods/certs/akmods-persistent.der
 
-git clone https://github.com/fnyaker/tuxedo-drivers-kmod
+    chmod 640 /etc/pki/akmods/private/akmods-persistent.priv
+    chown root:akmods /etc/pki/akmods/private/akmods-persistent.priv
 
-cd tuxedo-drivers-kmod/
-./build.sh
-cd ..
+    # Point symlinks to our persistent key
+    ln -sf /etc/pki/akmods/private/akmods-persistent.priv /etc/pki/akmods/private/private_key.priv
+    ln -sf /etc/pki/akmods/certs/akmods-persistent.der /etc/pki/akmods/certs/public_key.der
 
-# Extract the Version value from the spec file
-export TD_VERSION=$(cat tuxedo-drivers-kmod/tuxedo-drivers-kmod-common.spec | grep -E '^Version:' | awk '{print $2}')
+    echo "Persistent signing key injected. kmodgenca will reuse this key."
+else
+    echo "WARNING: No persistent akmods key provided. kmodgenca will generate a new key."
+    echo "Modules will NOT load under Secure Boot until the new key is enrolled in MOK."
+fi
 
-# Install the built RPMs - use glob to match any fc version
-# Install all 4 RPMs together so depsolve can resolve inter-package dependencies
-# Use --noscripts on akmod to skip the root-only post-install script
-# We do this by installing all via rpm-ostree but overriding the akmod post-install
-rpm-ostree install \
-    ~/rpmbuild/RPMS/x86_64/tuxedo-drivers-kmod-$TD_VERSION-*.x86_64.rpm \
-    ~/rpmbuild/RPMS/x86_64/tuxedo-drivers-kmod-common-$TD_VERSION-*.x86_64.rpm \
-    ~/rpmbuild/RPMS/x86_64/kmod-tuxedo-drivers-$TD_VERSION-*.x86_64.rpm \
-    ~/rpmbuild/RPMS/x86_64/akmod-tuxedo-drivers-$TD_VERSION-*.x86_64.rpm \
-    --uninstall=akmod-tuxedo-drivers || true
+# ============================================================
+# Install tuxedo-drivers via akmod (triggers akmods-ostree-post to build+sign kmods)
+# ============================================================
+# Installing akmod-tuxedo-drivers triggers its %post script which calls
+# akmods-ostree-post, which builds the kmod for the current kernel
+# and signs it with the key at /etc/pki/akmods/certs/public_key.der
+rpm-ostree install akmod-tuxedo-drivers
 
-# The above may fail because akmod post-install runs as root. 
-# Alternative: install all 4 at once - rpm-ostree handles them together
-# If that fails, try installing without akmod and manually place the kmod files
-rpm-ostree install \
-    ~/rpmbuild/RPMS/x86_64/tuxedo-drivers-kmod-$TD_VERSION-*.x86_64.rpm \
-    ~/rpmbuild/RPMS/x86_64/tuxedo-drivers-kmod-common-$TD_VERSION-*.x86_64.rpm \
-    ~/rpmbuild/RPMS/x86_64/kmod-tuxedo-drivers-$TD_VERSION-*.x86_64.rpm \
-    ~/rpmbuild/RPMS/x86_64/akmod-tuxedo-drivers-$TD_VERSION-*.x86_64.rpm || {
-    echo "rpm-ostree install failed, trying alternative approach..."
-    # Install common and kmod without akmod
-    rpm-ostree install \
-        ~/rpmbuild/RPMS/x86_64/tuxedo-drivers-kmod-$TD_VERSION-*.x86_64.rpm \
-        ~/rpmbuild/RPMS/x86_64/tuxedo-drivers-kmod-common-$TD_VERSION-*.x86_64.rpm || true
-    # Manually install kmod files
-    rpm2cpio ~/rpmbuild/RPMS/x86_64/kmod-tuxedo-drivers-$TD_VERSION-*.x86_64.rpm | cpio -idmv /lib/modules/ || true
-    # Manually install akmod files without scripts
-    rpm2cpio ~/rpmbuild/RPMS/x86_64/akmod-tuxedo-drivers-$TD_VERSION-*.x86_64.rpm | cpio -idmv /usr/src/akmods/ || true
-}
-
+# Verify modules were built
 KERNEL_VERSION="$(rpm -q kernel --queryformat '%{VERSION}-%{RELEASE}.%{ARCH}')"
-
 echo "Kernel version: ${KERNEL_VERSION}"
-echo "Installed tuxedo-drivers-kmod packages"
+echo "Checking for built tuxedo modules..."
+find /lib/modules/${KERNEL_VERSION}/extra/tuxedo-drivers -name "*.ko.xz" 2>/dev/null || {
+    echo "WARNING: tuxedo-drivers kmod not found after akmod installation"
+    echo "Checking if akmods-ostree-post ran..."
+    find /lib/modules -path "*/tuxedo-drivers/*" -name "*.ko*" 2>/dev/null | head -10
+}
 
 # ============================================================
 # Build and install tuxedo-yt6801 network driver
@@ -106,6 +96,18 @@ MODULE_INSTALL_DIR="/lib/modules/${KERNEL_VERSION}/extra/tuxedo-yt6801"
 mkdir -p "${MODULE_INSTALL_DIR}"
 
 find "${BUILD_DIR}" -name "*.ko" -exec install -D -m 755 {} "${MODULE_INSTALL_DIR}/" \;
+
+# Sign the yt6801 module with the akmods key pair (for Secure Boot)
+if [ -x "/lib/modules/${KERNEL_VERSION}/build/scripts/sign-file" ]; then
+    echo "Signing yt6801 module for Secure Boot..."
+    SIGN_KEY="/etc/pki/akmods/private/private_key.priv"
+    SIGN_CERT="/etc/pki/akmods/certs/public_key.der"
+    find "${MODULE_INSTALL_DIR}" -name "*.ko" -exec \
+        /lib/modules/${KERNEL_VERSION}/build/scripts/sign-file sha256 "${SIGN_KEY}" "${SIGN_CERT}" {} \;
+    echo "yt6801 module signed"
+    # Compress signed modules
+    find "${MODULE_INSTALL_DIR}" -name "*.ko" -exec xz -f {} \;
+fi
 
 depmod -a "${KERNEL_VERSION}"
 
