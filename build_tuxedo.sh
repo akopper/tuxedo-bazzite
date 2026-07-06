@@ -71,7 +71,14 @@ fi
 # akmod-tuxedo-drivers package in the TUXEDO repo for Fedora 44,
 # so we build the modules manually from the DKMS source.
 
-rpm-ostree install tuxedo-drivers
+rpm-ostree install cpio
+
+# Download and extract tuxedo-drivers DKMS source (avoid DKMS postinstall script)
+curl -s -o /tmp/tuxedo-drivers.rpm https://rpm.tuxedocomputers.com/fedora/${RELEASE}/x86_64/base/tuxedo-drivers-4.22.1-1.fc43.noarch.rpm
+mkdir -p /usr/src
+cd /usr/src
+rpm2cpio /tmp/tuxedo-drivers.rpm | cpio -idmv
+cd /tmp
 
 KERNEL_VERSION="$(rpm -q kernel --queryformat '%{VERSION}-%{RELEASE}.%{ARCH}')"
 echo "Kernel version: ${KERNEL_VERSION}"
