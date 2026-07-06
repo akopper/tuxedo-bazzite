@@ -192,25 +192,27 @@ cd /tmp
 
 curl -s -o /tmp/tuxedo-control-center.rpm https://rpm.tuxedocomputers.com/fedora/${RELEASE}/x86_64/base/tuxedo-control-center_3.0.6.rpm
 
+# Extract TCC RPM to a temporary directory (avoid /opt symlink issues
+# in ostree containers where /opt -> /var/opt)
+mkdir -p /tmp/tcc-extract
+cd /tmp/tcc-extract
+rpm2cpio /tmp/tuxedo-control-center.rpm | cpio -idmv || true
 cd /tmp
 
-# Remove /opt symlink (ostree containers have /opt -> /var/opt)
-# so we can extract TCC files to a real directory
-rm -f /opt 2>/dev/null || true
-mkdir -p /opt
-
-rpm2cpio /tmp/tuxedo-control-center.rpm | cpio -idmv || true
-
-# Move TCC from /opt to /usr/share (ostree prefers /usr/share)
-if [ -d /opt/tuxedo-control-center ]; then
-    mkdir -p /usr/share
-    cp -a /opt/tuxedo-control-center /usr/share/tuxedo-control-center
-    rm -rf /opt/tuxedo-control-center
+# Verify extraction succeeded
+if [ ! -d /tmp/tcc-extract/opt/tuxedo-control-center ]; then
+    echo "ERROR: TCC extraction failed - /tmp/tcc-extract/opt/tuxedo-control-center not found"
+    exit 1
 fi
 
-# Restore /opt symlink and point TCC to /usr/share
-rm -rf /opt
-ln -s /var/opt /opt
+echo "TCC extracted successfully to /tmp/tcc-extract/opt/tuxedo-control-center"
+ls /tmp/tcc-extract/opt/tuxedo-control-center/ | head -10
+
+# Install TCC to /usr/share (ostree prefers /usr/share over /opt)
+mkdir -p /usr/share
+cp -a /tmp/tcc-extract/opt/tuxedo-control-center /usr/share/tuxedo-control-center
+
+# Create /var/opt symlink for runtime compatibility
 mkdir -p /var/opt
 ln -sf /usr/share/tuxedo-control-center /var/opt/tuxedo-control-center
 
@@ -218,11 +220,48 @@ ln -sf /usr/share/tuxedo-control-center /var/opt/tuxedo-control-center
 rm -f /usr/bin/tuxedo-control-center
 ln -s /usr/share/tuxedo-control-center/tuxedo-control-center /usr/bin/tuxedo-control-center
 
-# Fix service paths
-sed -i 's|/opt|/usr/share|g' /etc/systemd/system/tccd.service 2>/dev/null || true
-sed -i 's|/opt|/usr/share|g' /usr/share/applications/tuxedo-control-center.desktop 2>/dev/null || true
+# Set SUID on chrome-sandbox (required by Electron 5+)
+chmod 4755 /usr/share/tuxedo-control-center/chrome-sandbox 2>/dev/null || true
 
+# ============================================================
+# Install service files, polkit, dbus, udev, desktop files
+# from the TCC dist-data directory (normally done by RPM posttrans)
+# ============================================================
+DIST_DATA=/usr/share/tuxedo-control-center/resources/dist/tuxedo-control-center/data/dist-data
+
+# Service files
+cp ${DIST_DATA}/tccd.service /etc/systemd/system/tccd.service
+cp ${DIST_DATA}/tccd-sleep.service /etc/systemd/system/tccd-sleep.service
+
+# Fix service paths: replace /opt with /usr/share
+sed -i 's|/opt/tuxedo-control-center|/usr/share/tuxedo-control-center|g' /etc/systemd/system/tccd.service
+sed -i 's|/opt/tuxedo-control-center|/usr/share/tuxedo-control-center|g' /etc/systemd/system/tccd-sleep.service
+
+# Polkit policies
+mkdir -p /usr/share/polkit-1/actions
+cp ${DIST_DATA}/com.tuxedocomputers.tccd.policy /usr/share/polkit-1/actions/com.tuxedocomputers.tccd.policy
+cp ${DIST_DATA}/com.tuxedocomputers.tomte.policy /usr/share/polkit-1/actions/com.tuxedocomputers.tomte.policy
+
+# DBus config
+mkdir -p /usr/share/dbus-1/system.d
+cp ${DIST_DATA}/com.tuxedocomputers.tccd.conf /usr/share/dbus-1/system.d/com.tuxedocomputers.tccd.conf
+
+# Desktop file
+cp ${DIST_DATA}/tuxedo-control-center.desktop /usr/share/applications/tuxedo-control-center.desktop
+sed -i 's|/opt/tuxedo-control-center|/usr/share/tuxedo-control-center|g' /usr/share/applications/tuxedo-control-center.desktop
+
+# Autostart desktop file
+mkdir -p /etc/skel/.config/autostart
+cp ${DIST_DATA}/tuxedo-control-center-tray.desktop /etc/skel/.config/autostart/tuxedo-control-center-tray.desktop
+
+# Udev rules
+cp ${DIST_DATA}/99-webcam.rules /etc/udev/rules.d/99-webcam.rules
+
+# Enable services
 systemctl enable tccd.service 2>/dev/null || true
 systemctl enable tccd-sleep.service 2>/dev/null || true
+
+# Clean up
+rm -rf /tmp/tcc-extract
 
 echo "Tuxedo drivers, yt6801, and Control Center installation completed!"
