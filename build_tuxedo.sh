@@ -211,6 +211,7 @@ fi
 # Restore /opt symlink and point TCC to /usr/share
 rm -rf /opt
 ln -s /var/opt /opt
+mkdir -p /var/opt
 ln -sf /usr/share/tuxedo-control-center /var/opt/tuxedo-control-center
 
 # Create bin symlink
