@@ -135,8 +135,8 @@ jobs:
           labels: ${{ steps.metadata.outputs.labels }}
           oci: false
           extra-args: |
-            --build-arg=AKMODS_PRIVATE_KEY_B64=${{ secrets.AKMODS_PRIVATE_KEY }}
-            --build-arg=AKMODS_PUBLIC_KEY_B64=${{ secrets.AKMODS_PUBLIC_KEY }}
+            --build-arg=AKMODS_PRIVATE_KEY_B64=${{ secrets.AKMODS_PRIVATE_KEY_B64 }}
+            --build-arg=AKMODS_PUBLIC_KEY_B64=${{ secrets.AKMODS_PUBLIC_KEY_B64 }}
 
       - name: Login to GitHub Container Registry
         if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
