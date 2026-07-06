@@ -77,7 +77,7 @@ rpm-ostree install cpio
 curl -s -o /tmp/tuxedo-drivers.rpm https://rpm.tuxedocomputers.com/fedora/${RELEASE}/x86_64/base/tuxedo-drivers-4.22.1-1.fc43.noarch.rpm
 mkdir -p /usr/src
 cd /
-rpm2cpio /tmp/tuxedo-drivers.rpm | cpio -idmv
+rpm2cpio /tmp/tuxedo-drivers.rpm | cpio -idmv || true
 cd /tmp
 
 KERNEL_VERSION="$(rpm -q kernel --queryformat '%{VERSION}-%{RELEASE}.%{ARCH}')"
@@ -193,7 +193,7 @@ cd /tmp
 curl -s -o /tmp/tuxedo-control-center.rpm https://rpm.tuxedocomputers.com/fedora/${RELEASE}/x86_64/base/tuxedo-control-center_3.0.6.rpm
 
 cd /
-rpm2cpio /tmp/tuxedo-control-center.rpm | cpio -idmv
+rpm2cpio /tmp/tuxedo-control-center.rpm | cpio -idmv || true
 
 # TCC installs to /opt/tuxedo-control-center, move to /usr/share
 if [ -d /opt/tuxedo-control-center ]; then
