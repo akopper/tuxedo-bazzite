@@ -192,18 +192,26 @@ cd /tmp
 
 curl -s -o /tmp/tuxedo-control-center.rpm https://rpm.tuxedocomputers.com/fedora/${RELEASE}/x86_64/base/tuxedo-control-center_3.0.6.rpm
 
-cd /
+cd /tmp
+
+# Remove /opt symlink (ostree containers have /opt -> /var/opt)
+# so we can extract TCC files to a real directory
+rm -f /opt 2>/dev/null || true
+mkdir -p /opt
+
 rpm2cpio /tmp/tuxedo-control-center.rpm | cpio -idmv || true
 
-# TCC installs to /opt/tuxedo-control-center, move to /usr/share
+# Move TCC from /opt to /usr/share (ostree prefers /usr/share)
 if [ -d /opt/tuxedo-control-center ]; then
     mkdir -p /usr/share
     cp -a /opt/tuxedo-control-center /usr/share/tuxedo-control-center
     rm -rf /opt/tuxedo-control-center
 fi
 
-# Create /opt symlink for runtime compatibility
-ln -sf /usr/share/tuxedo-control-center /opt/tuxedo-control-center
+# Restore /opt symlink and point TCC to /usr/share
+rm -rf /opt
+ln -s /var/opt /opt
+ln -sf /usr/share/tuxedo-control-center /var/opt/tuxedo-control-center
 
 # Create bin symlink
 rm -f /usr/bin/tuxedo-control-center
