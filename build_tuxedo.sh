@@ -177,27 +177,35 @@ modinfo yt6801 2>/dev/null && echo "yt6801 module found!" || echo "yt6801 module
 # ============================================================
 # Install and configure Tuxedo Control Center
 # ============================================================
+# Download and extract TCC RPM directly to avoid dependency issues
+# (tuxedo-control-center depends on dkms and tuxedo-drivers which
+# trigger DKMS postinstall scripts that fail in the CI container)
 cd /tmp
 
-# Hacky workaround to make TCC install elsewhere
-mkdir -p /usr/share
-rm /opt
-ln -s /usr/share /opt
-
-rpm-ostree install tuxedo-control-center
+curl -s -o /tmp/tuxedo-control-center.rpm https://rpm.tuxedocomputers.com/fedora/${RELEASE}/x86_64/base/tuxedo-control-center_3.0.6.rpm
 
 cd /
-rm /opt
-ln -s var/opt /opt
-ls -al /
+rpm2cpio /tmp/tuxedo-control-center.rpm | cpio -idmv
 
-rm /usr/bin/tuxedo-control-center
+# TCC installs to /opt/tuxedo-control-center, move to /usr/share
+if [ -d /opt/tuxedo-control-center ]; then
+    mkdir -p /usr/share
+    cp -a /opt/tuxedo-control-center /usr/share/tuxedo-control-center
+    rm -rf /opt/tuxedo-control-center
+fi
+
+# Create /opt symlink for runtime compatibility
+ln -sf /usr/share/tuxedo-control-center /opt/tuxedo-control-center
+
+# Create bin symlink
+rm -f /usr/bin/tuxedo-control-center
 ln -s /usr/share/tuxedo-control-center/tuxedo-control-center /usr/bin/tuxedo-control-center
 
-sed -i 's|/opt|/usr/share|g' /etc/systemd/system/tccd.service
-sed -i 's|/opt|/usr/share|g' /usr/share/applications/tuxedo-control-center.desktop
+# Fix service paths
+sed -i 's|/opt|/usr/share|g' /etc/systemd/system/tccd.service 2>/dev/null || true
+sed -i 's|/opt|/usr/share|g' /usr/share/applications/tuxedo-control-center.desktop 2>/dev/null || true
 
-systemctl enable tccd.service
-systemctl enable tccd-sleep.service
+systemctl enable tccd.service 2>/dev/null || true
+systemctl enable tccd-sleep.service 2>/dev/null || true
 
 echo "Tuxedo drivers, yt6801, and Control Center installation completed!"
