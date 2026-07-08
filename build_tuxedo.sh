@@ -25,22 +25,9 @@ rpm-ostree install rpm-build rpmdevtools kmodtool rpmrebuild cpio curl gcc make 
 chmod +x /usr/bin/fixtuxedo
 systemctl enable /etc/systemd/system/fixtuxedo.service
 
-# ============================================================
-# Disable stale tuxedo-modules.service from older images
-# ============================================================
-# A previous version of this image installed
-# tuxedo-modules.service and tuxedo-load-modules.sh which load
-# unsigned modules from /var/lib/tuxedo-kmods/ via insmod.  Under
-# Secure Boot those insmod calls silently fail and — worse — the
-# script first rmmod's the properly signed modules that
-# fixtuxedo loaded, leaving tccd with no fan / keyboard
-# support.  Remove the service, the script, and the stale
-# kmods directory so only fixtuxedo.service (modprobe on signed
-# modules) remains.
-systemctl disable tuxedo-modules.service 2>/dev/null || true
-rm -f /etc/systemd/system/tuxedo-modules.service
-rm -f /usr/local/bin/tuxedo-load-modules.sh
-rm -rf /var/lib/tuxedo-kmods
+# NOTE: tuxedo-modules.service, tuxedo-load-modules.sh and
+# /var/lib/tuxedo-kmods/ are removed AFTER the tuxedo-drivers RPM
+# extraction below, because that RPM re-creates them.
 
 # ============================================================
 # Blacklist the built-in kernel uniwill_laptop module
@@ -151,6 +138,19 @@ fi
 echo "Found tuxedo-drivers source at: ${TUXEDO_SRC_DIR}"
 
 build_and_sign_modules "${TUXEDO_SRC_DIR}" "tuxedo-drivers"
+
+# ============================================================
+# Remove stale tuxedo-modules.service / tuxedo-load-modules.sh /
+# /var/lib/tuxedo-kmods/ that the tuxedo-drivers RPM installed.
+# These load unsigned modules via insmod which fails under Secure
+# Boot and — worse — first rmmod the properly signed modules that
+# fixtuxedo loaded, leaving tccd with no fan / keyboard support.
+# Only fixtuxedo.service (modprobe on signed modules) should run.
+# ============================================================
+systemctl disable tuxedo-modules.service 2>/dev/null || true
+rm -f /etc/systemd/system/tuxedo-modules.service
+rm -f /usr/local/bin/tuxedo-load-modules.sh
+rm -rf /var/lib/tuxedo-kmods
 
 # ============================================================
 # Build and install tuxedo-yt6801 network driver
