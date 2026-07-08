@@ -1,0 +1,88 @@
+// /etc/niri/config.kdl — system-wide defaults
+// Users can override via ~/.config/niri/config.kdl
+
+// ── Cursor (fixes missing cursor) ───────────────
+cursor {
+    xcursor-theme "Adwaita"
+    xcursor-size 24
+}
+
+// ── Autostart ───────────────────────────────────
+spawn-at-startup "noctalia"
+spawn-at-startup "systemctl" "--user" "import-environment" \
+    "WAYLAND_DISPLAY" "XDG_CURRENT_DESKTOP"
+spawn-at-startup "dbus-update-activation-environment" \
+    "--systemd" "WAYLAND_DISPLAY" "XDG_CURRENT_DESKTOP=niri"
+
+// ── Window rules ────────────────────────────────
+window-rule {
+    geometry-corner-radius 16
+    clip-to-geometry true
+}
+
+// Noctalia settings window floating
+window-rule {
+    match app-id="dev.noctalia.Noctalia"
+    open-floating true
+    default-column-width { fixed 1080; }
+    default-window-height { fixed 920; }
+}
+
+// ── Blur ────────────────────────────────────────
+window-rule {
+    background-effect {
+        blur true
+        xray false
+    }
+}
+
+layer-rule {
+    match namespace="^noctalia-(bar-.*|notification|dock|panel|attached-panel|osd)$"
+    background-effect {
+        xray false
+    }
+}
+
+blur {
+    passes 2
+    offset 3.0
+    noise 0.03
+    saturation 1.0
+}
+
+// ── Debug ───────────────────────────────────────
+debug {
+    honor-xdg-activation-with-invalid-serial
+}
+
+// ── Noctalia IPC keybinds ───────────────────────
+binds {
+    Mod+Space { spawn-sh "noctalia msg panel-toggle launcher"; }
+    Mod+S { spawn-sh "noctalia msg panel-toggle control-center"; }
+    Mod+Comma { spawn-sh "noctalia msg settings-toggle"; }
+    XF86AudioRaiseVolume { spawn-sh "noctalia msg volume-up"; }
+    XF86AudioLowerVolume { spawn-sh "noctalia msg volume-down"; }
+    XF86AudioMute { spawn-sh "noctalia msg volume-mute"; }
+    XF86MonBrightnessUp { spawn-sh "noctalia msg brightness-up"; }
+    XF86MonBrightnessDown { spawn-sh "noctalia msg brightness-down"; }
+}
+
+// ── Layout ──────────────────────────────────────
+layout {
+    gaps 16
+    struts {
+        top 3
+    }
+    always-center-single-column
+    preset-column-widths {
+        proportion 0.5
+        proportion 0.66667
+        proportion 0.33333
+    }
+}
+
+// ── Focus ring ──────────────────────────────────
+focus-ring {
+    active-gradient from="#313244" to="#45475a" angle=45
+    inactive-color "#1e1e2e"
+}
