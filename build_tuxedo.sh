@@ -26,6 +26,23 @@ chmod +x /usr/bin/fixtuxedo
 systemctl enable /etc/systemd/system/fixtuxedo.service
 
 # ============================================================
+# Disable stale tuxedo-modules.service from older images
+# ============================================================
+# A previous version of this image installed
+# tuxedo-modules.service and tuxedo-load-modules.sh which load
+# unsigned modules from /var/lib/tuxedo-kmods/ via insmod.  Under
+# Secure Boot those insmod calls silently fail and — worse — the
+# script first rmmod's the properly signed modules that
+# fixtuxedo loaded, leaving tccd with no fan / keyboard
+# support.  Remove the service, the script, and the stale
+# kmods directory so only fixtuxedo.service (modprobe on signed
+# modules) remains.
+systemctl disable tuxedo-modules.service 2>/dev/null || true
+rm -f /etc/systemd/system/tuxedo-modules.service
+rm -f /usr/local/bin/tuxedo-load-modules.sh
+rm -rf /var/lib/tuxedo-kmods
+
+# ============================================================
 # Blacklist the built-in kernel uniwill_laptop module
 # ============================================================
 # The kernel ships a built-in uniwill_laptop module
