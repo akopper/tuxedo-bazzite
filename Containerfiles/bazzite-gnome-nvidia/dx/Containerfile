@@ -16,20 +16,17 @@ ARG AKMODS_PUBLIC_KEY_B64
 COPY tuxedo.repo /etc/yum.repos.d/tuxedo.repo
 COPY fixtuxedo /usr/bin/fixtuxedo
 COPY fixtuxedo.service /etc/systemd/system/fixtuxedo.service
-
-# Copy all build scripts
-COPY build-base.sh /tmp/build-base.sh
 COPY build_tuxedo.sh /tmp/build_tuxedo.sh
 
-# Make scripts executable and run all installations in one layer
-RUN chmod +x /tmp/build-base.sh /tmp/build_tuxedo.sh && \
+# Make script executable and run all installations in one layer
+RUN chmod +x /tmp/build_tuxedo.sh && \
     mkdir -p /var/lib/alternatives && \
     RELEASE="$(rpm -E %fedora)" && \
     sed -i "s/FEDORA_VERSION_PLACEHOLDER/${RELEASE}/g" /etc/yum.repos.d/tuxedo.repo && \
     AKMODS_PRIVATE_KEY_B64="${AKMODS_PRIVATE_KEY_B64}" \
     AKMODS_PUBLIC_KEY_B64="${AKMODS_PUBLIC_KEY_B64}" \
-    /tmp/build-base.sh && \
-    AKMODS_PRIVATE_KEY_B64="${AKMODS_PRIVATE_KEY_B64}" \
-    AKMODS_PUBLIC_KEY_B64="${AKMODS_PUBLIC_KEY_B64}" \
     /tmp/build_tuxedo.sh && \
     ostree container commit
+
+### 4. LINTING
+RUN bootc container lint

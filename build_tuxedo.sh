@@ -5,14 +5,19 @@ set -ouex pipefail
 RELEASE="$(rpm -E %fedora)"
 
 # ============================================================
+# Base utilities
+# ============================================================
+# tmux and gnome-disk-utility are commonly useful on laptops.
+# Folded in from the former build-base.sh to reduce script count.
+rpm-ostree install tmux gnome-disk-utility
+
+# Enable podman socket for container management
+systemctl enable podman.socket
+
+# ============================================================
 # Install build dependencies for Tuxedo drivers
 # ============================================================
-rpm-ostree install rpm-build
-rpm-ostree install rpmdevtools
-rpm-ostree install kmodtool
-rpm-ostree install rpmrebuild
-rpm-ostree install curl
-rpm-ostree install gcc make kernel-devel
+rpm-ostree install rpm-build rpmdevtools kmodtool rpmrebuild cpio curl gcc make kernel-devel
 
 # ============================================================
 # Setup fixtuxedo script and service
@@ -65,6 +70,44 @@ else
 fi
 
 # ============================================================
+# Helper: build, install, and sign a kernel module from source
+# ============================================================
+# Usage: build_and_sign_modules <src_dir> <install_subdir>
+build_and_sign_modules() {
+    local SRC_DIR="$1"
+    local INSTALL_SUBDIR="$2"
+
+    echo "Building modules from ${SRC_DIR} for kernel ${KERNEL_VERSION}..."
+    make V=1 -C "/lib/modules/${KERNEL_VERSION}/build" M="${SRC_DIR}" modules
+
+    local MODULE_INSTALL_DIR="/lib/modules/${KERNEL_VERSION}/extra/${INSTALL_SUBDIR}"
+    mkdir -p "${MODULE_INSTALL_DIR}"
+
+    # Install all built .ko files
+    find "${SRC_DIR}" -name "*.ko" -exec install -D -m 755 {} "${MODULE_INSTALL_DIR}/" \;
+
+    # Sign the modules with the akmods key pair (for Secure Boot)
+    if [ -x "/lib/modules/${KERNEL_VERSION}/build/scripts/sign-file" ]; then
+        echo "Signing modules in ${INSTALL_SUBDIR} for Secure Boot..."
+        local SIGN_KEY="/etc/pki/akmods/private/private_key.priv"
+        local SIGN_CERT="/etc/pki/akmods/certs/public_key.der"
+        if [ -f "${SIGN_KEY}" ] && [ -f "${SIGN_CERT}" ]; then
+            find "${MODULE_INSTALL_DIR}" -name "*.ko" -exec \
+                /lib/modules/${KERNEL_VERSION}/build/scripts/sign-file sha256 "${SIGN_KEY}" "${SIGN_CERT}" {} \;
+            echo "${INSTALL_SUBDIR} modules signed"
+        else
+            echo "WARNING: Signing keys not found, skipping module signing"
+        fi
+        # Compress signed modules
+        find "${MODULE_INSTALL_DIR}" -name "*.ko" -exec xz --check=crc32 -f {} \;
+    fi
+
+    depmod -a "${KERNEL_VERSION}"
+    echo "Modules in ${INSTALL_SUBDIR} installed:"
+    find "${MODULE_INSTALL_DIR}" -name "*.ko*" | head -20
+}
+
+# ============================================================
 # Install tuxedo-drivers DKMS source and build kernel modules
 # ============================================================
 # The TUXEDO repo provides a DKMS source package
@@ -72,8 +115,6 @@ fi
 # /usr/src/tuxedo-drivers-<version>/. There is no
 # akmod-tuxedo-drivers package in the TUXEDO repo for Fedora 44,
 # so we build the modules manually from the DKMS source.
-
-rpm-ostree install cpio
 
 # Download and extract tuxedo-drivers DKMS source (avoid DKMS postinstall script)
 curl -s -o /tmp/tuxedo-drivers.rpm https://rpm.tuxedocomputers.com/fedora/${RELEASE}/x86_64/base/tuxedo-drivers-4.22.1-1.fc43.noarch.rpm
@@ -92,96 +133,32 @@ if [ -z "${TUXEDO_SRC_DIR}" ]; then
 fi
 echo "Found tuxedo-drivers source at: ${TUXEDO_SRC_DIR}"
 
-echo "Building tuxedo-drivers modules for kernel ${KERNEL_VERSION}..."
-cd "${TUXEDO_SRC_DIR}"
-make V=1 -C "/lib/modules/${KERNEL_VERSION}/build" M="${TUXEDO_SRC_DIR}" modules
-
-MODULE_INSTALL_DIR="/lib/modules/${KERNEL_VERSION}/extra/tuxedo-drivers"
-mkdir -p "${MODULE_INSTALL_DIR}"
-
-# Install all built .ko files
-find "${TUXEDO_SRC_DIR}" -name "*.ko" -exec install -D -m 755 {} "${MODULE_INSTALL_DIR}/" \;
-
-# Sign the modules with the akmods key pair (for Secure Boot)
-if [ -x "/lib/modules/${KERNEL_VERSION}/build/scripts/sign-file" ]; then
-    echo "Signing tuxedo-drivers modules for Secure Boot..."
-    SIGN_KEY="/etc/pki/akmods/private/private_key.priv"
-    SIGN_CERT="/etc/pki/akmods/certs/public_key.der"
-    if [ -f "${SIGN_KEY}" ] && [ -f "${SIGN_CERT}" ]; then
-        find "${MODULE_INSTALL_DIR}" -name "*.ko" -exec \
-            /lib/modules/${KERNEL_VERSION}/build/scripts/sign-file sha256 "${SIGN_KEY}" "${SIGN_CERT}" {} \;
-        echo "tuxedo-drivers modules signed"
-    else
-        echo "WARNING: Signing keys not found, skipping module signing"
-    fi
-    # Compress signed modules
-    find "${MODULE_INSTALL_DIR}" -name "*.ko" -exec xz --check=crc32 -f {} \;
-fi
-
-depmod -a "${KERNEL_VERSION}"
-
-echo "Verifying tuxedo-drivers module installation..."
-find /lib/modules/${KERNEL_VERSION}/extra/tuxedo-drivers -name "*.ko*" | head -20
+build_and_sign_modules "${TUXEDO_SRC_DIR}" "tuxedo-drivers"
 
 # ============================================================
 # Build and install tuxedo-yt6801 network driver
 # ============================================================
+# Uses the h4rm00n fork which patches the official driver for
+# kernel 6.15+ API changes. The official Motorcomm driver is
+# not yet mainlined.
 cd /tmp
 
-echo "Cloning fixed yt6801 repository with kernel 6.15+ compatibility..."
+echo "Cloning yt6801 driver with kernel 6.15+ compatibility..."
 git clone https://github.com/h4rm00n/yt6801-linux-driver
 cd yt6801-linux-driver
-
-echo "Source directory contents:"
-ls -la
-
-echo "Building yt6801 module manually for kernel ${KERNEL_VERSION}..."
 
 BUILD_DIR="/tmp/_kmod_build_${KERNEL_VERSION}"
 mkdir -p "${BUILD_DIR}"
 
 if [ -d "src" ]; then
-    echo "Copying src directory to build location..."
     cp -a src/* "${BUILD_DIR}/"
 else
-    echo "No src directory found, looking for source files in root..."
-    find . -name "*.c" -o -name "*.h" -o -name "Makefile" | head -10
-    echo "Copying source files to build directory..."
     find . -maxdepth 1 \( -name "*.c" -o -name "*.h" -o -name "Makefile" \) -exec cp {} "${BUILD_DIR}/" \;
 fi
 
-cd "${BUILD_DIR}"
-make V=1 -C "/lib/modules/${KERNEL_VERSION}/build" M="${BUILD_DIR}" modules
+build_and_sign_modules "${BUILD_DIR}" "tuxedo-yt6801"
 
-MODULE_INSTALL_DIR="/lib/modules/${KERNEL_VERSION}/extra/tuxedo-yt6801"
-mkdir -p "${MODULE_INSTALL_DIR}"
-
-find "${BUILD_DIR}" -name "*.ko" -exec install -D -m 755 {} "${MODULE_INSTALL_DIR}/" \;
-
-# Sign the yt6801 module with the akmods key pair (for Secure Boot)
-if [ -x "/lib/modules/${KERNEL_VERSION}/build/scripts/sign-file" ]; then
-    echo "Signing yt6801 module for Secure Boot..."
-    SIGN_KEY="/etc/pki/akmods/private/private_key.priv"
-    SIGN_CERT="/etc/pki/akmods/certs/public_key.der"
-    if [ -f "${SIGN_KEY}" ] && [ -f "${SIGN_CERT}" ]; then
-        find "${MODULE_INSTALL_DIR}" -name "*.ko" -exec \
-            /lib/modules/${KERNEL_VERSION}/build/scripts/sign-file sha256 "${SIGN_KEY}" "${SIGN_CERT}" {} \;
-        echo "yt6801 module signed"
-    else
-        echo "WARNING: Signing keys not found, skipping module signing"
-    fi
-    # Compress signed modules
-    find "${MODULE_INSTALL_DIR}" -name "*.ko" -exec xz --check=crc32 -f {} \;
-fi
-
-depmod -a "${KERNEL_VERSION}"
-
-echo "yt6801 module installation completed"
-
-echo "Verifying yt6801 module installation..."
-find /lib/modules/${KERNEL_VERSION}/extra -name "*yt6801*" | head -5
-
-echo "Checking if module is available to modinfo..."
+echo "Checking if yt6801 is available to modinfo..."
 modinfo yt6801 2>/dev/null && echo "yt6801 module found!" || echo "yt6801 module not found by modinfo"
 
 # ============================================================
@@ -206,9 +183,6 @@ if [ ! -d /tmp/tcc-extract/opt/tuxedo-control-center ]; then
     echo "ERROR: TCC extraction failed - /tmp/tcc-extract/opt/tuxedo-control-center not found"
     exit 1
 fi
-
-echo "TCC extracted successfully to /tmp/tcc-extract/opt/tuxedo-control-center"
-ls /tmp/tcc-extract/opt/tuxedo-control-center/ | head -10
 
 # Install TCC to /usr/share (ostree prefers /usr/share over /opt)
 mkdir -p /usr/share

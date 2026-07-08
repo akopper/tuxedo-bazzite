@@ -2,24 +2,31 @@
 ARG SOURCE_IMAGE="bazzite-nvidia"
 ARG SOURCE_SUFFIX=""
 ARG SOURCE_TAG="stable"
+ARG AKMODS_PRIVATE_KEY_B64=""
+ARG AKMODS_PUBLIC_KEY_B64=""
 
 ### 2. SOURCE IMAGE
 FROM ghcr.io/ublue-os/${SOURCE_IMAGE}${SOURCE_SUFFIX}:${SOURCE_TAG}
+
+# Re-declare build args after FROM (ARGs before FROM are only for FROM itself)
+ARG AKMODS_PRIVATE_KEY_B64
+ARG AKMODS_PUBLIC_KEY_B64
 
 ### 3. MODIFICATIONS
 COPY tuxedo.repo /etc/yum.repos.d/tuxedo.repo
 COPY fixtuxedo /usr/bin/fixtuxedo
 COPY fixtuxedo.service /etc/systemd/system/fixtuxedo.service
-
-# Copy all build scripts
-COPY build-base.sh /tmp/build-base.sh
 COPY build_tuxedo.sh /tmp/build_tuxedo.sh
 
-# Make scripts executable and run all installations in one layer
-RUN chmod +x /tmp/build-base.sh /tmp/build_tuxedo.sh && \
+# Make script executable and run all installations in one layer
+RUN chmod +x /tmp/build_tuxedo.sh && \
     mkdir -p /var/lib/alternatives && \
     RELEASE="$(rpm -E %fedora)" && \
     sed -i "s/FEDORA_VERSION_PLACEHOLDER/${RELEASE}/g" /etc/yum.repos.d/tuxedo.repo && \
-    /tmp/build-base.sh && \
+    AKMODS_PRIVATE_KEY_B64="${AKMODS_PRIVATE_KEY_B64}" \
+    AKMODS_PUBLIC_KEY_B64="${AKMODS_PUBLIC_KEY_B64}" \
     /tmp/build_tuxedo.sh && \
     ostree container commit
+
+### 4. LINTING
+RUN bootc container lint
