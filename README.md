@@ -14,12 +14,16 @@ All images are published to `ghcr.io/akopper/`:
 | `tuxedo-bazzite-gnome` | `bazzite-gnome:stable` | Bazzite GNOME Desktop with Tuxedo drivers |
 | `tuxedo-bazzite-nvidia` | `bazzite-nvidia:stable` | Bazzite KDE with NVIDIA drivers + Tuxedo drivers |
 | `tuxedo-bazzite-gnome-nvidia` | `bazzite-gnome-nvidia:stable` | Bazzite GNOME with NVIDIA drivers + Tuxedo drivers |
+| `tuxedo-bazzite-gnome-niri` | `bazzite-gnome:stable` | Bazzite GNOME + niri (with Noctalia) + Tuxedo drivers |
+| `tuxedo-bazzite-gnome-niri-nvidia` | `bazzite-gnome-nvidia:stable` | Bazzite GNOME + niri (with Noctalia) + NVIDIA + Tuxedo drivers |
 
 ## What's included
 
 - **[Tuxedo Drivers](https://gitlab.com/tuxedocomputers/development/packages/tuxedo-drivers)** — kernel modules built via `akmod-tuxedo-drivers` from the Tuxedo RPM repo, signed for Secure Boot
 - **[Tuxedo Control Center](https://github.com/tuxedocomputers/tuxedo-control-center)** — GUI and `tccd` service for fan/LED/power profiles
 - **[yt6801 Ethernet Driver](https://github.com/h4rm00n/yt6801-linux-driver)** — for Motorcomm NICs (signed for Secure Boot)
+- **[niri](https://github.com/niri-wm/niri)** — scrollable-tiling Wayland compositor (niri variants only)
+- **[Noctalia](https://noctalia.dev/)** — native C++/OpenGL ES shell for niri (niri variants only)
 - Everything from upstream Bazzite
 
 ---
@@ -117,3 +121,5 @@ This image is automatically rebuilt twice a week (Monday & Thursday) via GitHub 
 - [BrickMan240/ublue-tuxedo-tcc](https://github.com/BrickMan240/ublue-tuxedo-tcc) — Original Tuxedo image concept
 - [Universal Blue](https://universal-blue.org/) — Bazzite base image
 - [TUXEDO Computers](https://www.tuxedocomputers.com) — Drivers and Control Center
+- [derfl007/wayblue-nvidia-muskoxen](https://github.com/derfl007/wayblue-nvidia-muskoxen) — Noctalia setup script and niri config inspiration
+- [DataLabTechTV/dltos](https://github.com/DataLabTechTV/dltos) — niri + Noctalia on Bazzite reference

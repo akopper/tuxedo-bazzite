@@ -1,0 +1,46 @@
+## 1. BUILD ARGS
+ARG SOURCE_IMAGE="bazzite-gnome-nvidia"
+ARG SOURCE_SUFFIX=""
+ARG SOURCE_TAG="stable"
+ARG AKMODS_PRIVATE_KEY_B64=""
+ARG AKMODS_PUBLIC_KEY_B64=""
+
+### 2. SOURCE IMAGE
+FROM ghcr.io/ublue-os/${SOURCE_IMAGE}${SOURCE_SUFFIX}:${SOURCE_TAG}
+
+# Re-declare build args after FROM (ARGs before FROM are only for FROM itself)
+ARG AKMODS_PRIVATE_KEY_B64
+ARG AKMODS_PUBLIC_KEY_B64
+
+### 3. TUXEDO MODIFICATIONS
+COPY tuxedo.repo /etc/yum.repos.d/tuxedo.repo
+COPY fixtuxedo /usr/bin/fixtuxedo
+COPY fixtuxedo.service /etc/systemd/system/fixtuxedo.service
+COPY build_tuxedo.sh /tmp/build_tuxedo.sh
+
+# Make script executable and run all installations in one layer
+RUN chmod +x /tmp/build_tuxedo.sh && \
+    mkdir -p /var/lib/alternatives && \
+    RELEASE="$(rpm -E %fedora)" && \
+    sed -i "s/FEDORA_VERSION_PLACEHOLDER/${RELEASE}/g" /etc/yum.repos.d/tuxedo.repo && \
+    AKMODS_PRIVATE_KEY_B64="${AKMODS_PRIVATE_KEY_B64}" \
+    AKMODS_PUBLIC_KEY_B64="${AKMODS_PUBLIC_KEY_B64}" \
+    /tmp/build_tuxedo.sh && \
+    ostree container commit
+
+### 4. NIRI + NOCTALIA MODIFICATIONS
+COPY niri/build_niri.sh /tmp/build_niri.sh
+COPY niri/config.kdl /tmp/niri-config.kdl
+COPY niri/setup-noctalia /tmp/setup-noctalia
+COPY niri/noctalia.just /tmp/noctalia.just
+
+RUN chmod +x /tmp/build_niri.sh && \
+    /tmp/build_niri.sh && \
+    ostree container commit
+
+### 5. LINTING
+RUN bootc container lint
+
+## NOTES:
+# - /var/lib/alternatives is required to prevent failure with some RPM installs
+# - All RUN commands must end with ostree container commit
