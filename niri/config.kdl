@@ -79,10 +79,10 @@ layout {
         proportion 0.66667
         proportion 0.33333
     }
-}
 
-// ── Focus ring ──────────────────────────────────
-focus-ring {
-    active-gradient from="#313244" to="#45475a" angle=45
-    inactive-color "#1e1e2e"
+    // ── Focus ring ──────────────────────────────
+    focus-ring {
+        active-gradient from="#313244" to="#45475a" angle=45
+        inactive-color "#1e1e2e"
+    }
 }
