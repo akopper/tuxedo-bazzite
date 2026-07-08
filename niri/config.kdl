@@ -8,11 +8,12 @@ cursor {
 }
 
 // ── Autostart ───────────────────────────────────
-spawn-at-startup "noctalia"
+// Import environment variables FIRST, then start noctalia
 spawn-at-startup "systemctl" "--user" "import-environment" \
     "WAYLAND_DISPLAY" "XDG_CURRENT_DESKTOP"
 spawn-at-startup "dbus-update-activation-environment" \
     "--systemd" "WAYLAND_DISPLAY" "XDG_CURRENT_DESKTOP=niri"
+spawn-at-startup "noctalia"
 
 // ── Window rules ────────────────────────────────
 window-rule {
