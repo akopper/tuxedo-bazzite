@@ -3,6 +3,14 @@
 # ============================================================
 # TUXEDO boot-time fixup script
 # ============================================================
+# This script runs before tccd.service at boot to:
+#   1. Create the /opt symlink for Tuxedo Control Center
+#   2. Unload the built-in uniwill_laptop module if it slipped
+#      past the modprobe blacklist, then load tuxedo-drivers
+#      modules in the correct order.
+# ============================================================
+
+set -e
 
 # Create /opt symlink for Tuxedo Control Center
 if [ ! -L "/opt/tuxedo-control-center" ]; then
@@ -19,7 +27,6 @@ fi
 # ============================================================
 WMI_DEVICE="ABBC0F72-8EA1-11D1-00A0-C90629100000-8"
 
-# Check if uniwill_laptop is loaded
 if lsmod | grep -q "uniwill_laptop"; then
     echo "uniwill_laptop is loaded, unbinding and removing..."
 
@@ -35,22 +42,11 @@ if lsmod | grep -q "uniwill_laptop"; then
     echo "uniwill_laptop removed"
 fi
 
-# Load tuxedo-drivers modules in the correct order
-# Only load if not already loaded
-if ! lsmod | grep -q "tuxedo_compatibility_check"; then
-    modprobe tuxedo_compatibility_check 2>/dev/null || true
-fi
-if ! lsmod | grep -q "uniwill_wmi"; then
-    modprobe uniwill_wmi 2>/dev/null || true
-fi
-if ! lsmod | grep -q "clevo_wmi"; then
-    modprobe clevo_wmi 2>/dev/null || true
-fi
-if ! lsmod | grep -q "tuxedo_io"; then
-    modprobe tuxedo_io 2>/dev/null || true
-fi
-if ! lsmod | grep -q "tuxedo_keyboard"; then
-    modprobe tuxedo_keyboard 2>/dev/null || true
-fi
+# Load tuxedo-drivers modules in dependency order (best-effort)
+for mod in tuxedo_compatibility_check uniwill_wmi clevo_wmi tuxedo_io tuxedo_keyboard; do
+    if ! lsmod | grep -q "^${mod}\b"; then
+        modprobe "${mod}" 2>/dev/null || true
+    fi
+done
 
 echo "Tuxedo boot-time fixup completed"
