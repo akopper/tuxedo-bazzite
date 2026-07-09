@@ -25,10 +25,6 @@ rpm-ostree install rpm-build rpmdevtools kmodtool rpmrebuild cpio curl gcc make 
 chmod +x /usr/bin/fixtuxedo
 systemctl enable /etc/systemd/system/fixtuxedo.service
 
-# NOTE: tuxedo-modules.service, tuxedo-load-modules.sh and
-# /var/lib/tuxedo-kmods/ are removed AFTER the tuxedo-drivers RPM
-# extraction below, because that RPM re-creates them.
-
 # ============================================================
 # Blacklist the built-in kernel uniwill_laptop module
 # ============================================================
@@ -138,19 +134,6 @@ fi
 echo "Found tuxedo-drivers source at: ${TUXEDO_SRC_DIR}"
 
 build_and_sign_modules "${TUXEDO_SRC_DIR}" "tuxedo-drivers"
-
-# ============================================================
-# Remove stale tuxedo-modules.service / tuxedo-load-modules.sh /
-# /var/lib/tuxedo-kmods/ that the tuxedo-drivers RPM installed.
-# These load unsigned modules via insmod which fails under Secure
-# Boot and — worse — first rmmod the properly signed modules that
-# fixtuxedo loaded, leaving tccd with no fan / keyboard support.
-# Only fixtuxedo.service (modprobe on signed modules) should run.
-# ============================================================
-systemctl disable tuxedo-modules.service 2>/dev/null || true
-rm -f /etc/systemd/system/tuxedo-modules.service
-rm -f /usr/local/bin/tuxedo-load-modules.sh
-rm -rf /var/lib/tuxedo-kmods
 
 # ============================================================
 # Build and install tuxedo-yt6801 network driver
