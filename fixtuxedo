@@ -5,7 +5,10 @@
 # ============================================================
 # This script runs before tccd.service at boot to:
 #   1. Create the /opt symlink for Tuxedo Control Center
-#   2. Unload the built-in uniwill_laptop module if it slipped
+#   2. Remove stale tuxedo-modules.service and its helper script
+#      that load unsigned modules via insmod (fails under Secure
+#      Boot and rmmod's the signed modules fixtuxedo loaded).
+#   3. Unload the built-in uniwill_laptop module if it slipped
 #      past the modprobe blacklist, then load tuxedo-drivers
 #      modules in the correct order.
 # ============================================================
@@ -19,6 +22,26 @@ if [ ! -L "/opt/tuxedo-control-center" ]; then
 else
     echo "Tuxedo symlink at /opt already exists, no fix needed"
 fi
+
+# ============================================================
+# Remove stale tuxedo-modules.service from older images.
+# In ostree, /etc and /usr/local are persistent across rebases,
+# so build-time removal is not enough — we must also clean up
+# at runtime.
+# ============================================================
+if systemctl list-unit-files | grep -q "tuxedo-modules.service"; then
+    echo "Disabling stale tuxedo-modules.service..."
+    systemctl disable tuxedo-modules.service 2>/dev/null || true
+    systemctl mask tuxedo-modules.service 2>/dev/null || true
+    systemctl stop tuxedo-modules.service 2>/dev/null || true
+fi
+
+rm -f /etc/systemd/system/tuxedo-modules.service
+rm -f /usr/local/bin/tuxedo-load-modules.sh
+rm -rf /var/lib/tuxedo-kmods
+
+# Re-read systemd so it notices the service is gone
+systemctl daemon-reload 2>/dev/null || true
 
 # ============================================================
 # Unbind and unload the built-in uniwill_laptop module if it
