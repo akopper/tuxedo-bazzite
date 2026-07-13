@@ -1,0 +1,135 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# ============================================================
+# Configure niri to render on the discrete GPU (dGPU).
+#
+# On hybrid GPU laptops (integrated GPU + NVIDIA dGPU), the
+# external monitor port is physically wired to the dGPU. By
+# default niri renders on the integrated GPU and copies the
+# framebuffer to the dGPU for display, which can cause lag and
+# stuttering on the external monitor.
+#
+# This script detects the NVIDIA dGPU render device and adds
+# the `render-drm-device` debug option to the niri config so
+# niri renders directly on the dGPU.
+#
+# Trade-off: the dGPU will consume more power even when idle,
+# significantly reducing battery life. Use this only if you
+# regularly use an external monitor and experience lag.
+# ============================================================
+
+NIRI_DIR="$HOME/.config/niri"
+CONFIG="$NIRI_DIR/config.kdl"
+DGPU_FILE="$NIRI_DIR/dgpu-render.kdl"
+
+mkdir -p "$NIRI_DIR"
+touch "$CONFIG"
+
+# ------------------------------------------------------------
+# Detect the NVIDIA dGPU render device.
+# ------------------------------------------------------------
+# On hybrid laptops the NVIDIA card is typically renderD128
+# or renderD129. We identify it by checking which render node
+# is associated with an NVIDIA DRM card.
+NVIDIA_RENDER=""
+
+# Method 1: check /dev/dri/by-path for PCI devices matching NVIDIA
+if [ -d /dev/dri/by-path ]; then
+    for link in /dev/dri/by-path/*-render; do
+        target=$(readlink -f "$link")
+        # Find the card number, then check if it's an NVIDIA device
+        card_num=$(basename "$target" | sed 's/renderD//; s/card//')
+        card_dev="/dev/dri/card$((card_num - 128))"
+        # Check the DRM device vendor via sysfs
+        sysfs_path=$(udevadm info -q path -n "$target" 2>/dev/null)
+        if [ -n "$sysfs_path" ] && grep -qi "nvidia" /sys"$sysfs_path"/vendor 2>/dev/null; then
+            NVIDIA_RENDER="$target"
+            break
+        fi
+    done
+fi
+
+# Method 2: fall back to lspci + render node enumeration
+if [ -z "$NVIDIA_RENDER" ]; then
+    # Find NVIDIA PCI address
+    nvidia_pci=$(lspci -D | grep -i 'vga.*nvidia' | awk '{print $1}' | head -1)
+    if [ -n "$nvidia_pci" ]; then
+        # Convert PCI address to by-path format and find render node
+        # PCI addresses in by-path use lowercase hex with leading zeros
+        pci_formatted=$(echo "$nvidia_pci" | tr '[:upper:]' '[:lower:]')
+        for link in /dev/dri/by-path/pci-0000:*-render; do
+            if echo "$link" | grep -qi "$pci_formatted"; then
+                NVIDIA_RENDER=$(readlink -f "$link")
+                break
+            fi
+        done 2>/dev/null || true
+    fi
+fi
+
+# Method 3: check which render node has the NVIDIA driver loaded
+if [ -z "$NVIDIA_RENDER" ]; then
+    for render in /dev/dri/renderD*; do
+        [ -e "$render" ] || continue
+        card_num=$(basename "$render" | sed 's/renderD//')
+        card_idx=$((card_num - 128))
+        # Check if nvidia module is loaded for this card
+        if [ -f "/sys/class/drm/card${card_idx}/device/driver" ]; then
+            driver=$(basename "$(readlink -f "/sys/class/drm/card${card_idx}/device/driver")" 2>/dev/null)
+            if [ "$driver" = "nvidia" ] || [ "$driver" = "nvidia_drm" ]; then
+                NVIDIA_RENDER="$render"
+                break
+            fi
+        fi
+    done
+fi
+
+if [ -z "$NVIDIA_RENDER" ]; then
+    echo "ERROR: Could not detect an NVIDIA dGPU render device."
+    echo ""
+    echo "Available render devices:"
+    ls -la /dev/dri/renderD* 2>/dev/null || echo "  (none found)"
+    echo ""
+    echo "You can set the render device manually by adding this to your niri config:"
+    echo '  debug {'
+    echo '    render-drm-device "/dev/dri/renderD128"'
+    echo '  }'
+    exit 1
+fi
+
+echo "Detected NVIDIA dGPU render device: $NVIDIA_RENDER"
+
+# ------------------------------------------------------------
+# Generate the dGPU render config include file.
+# ------------------------------------------------------------
+cat > "$DGPU_FILE" << DGPU_EOF
+// Managed by ujust setup-dgpu — regenerated on every run.
+// Do not hand-edit; changes here will be overwritten.
+//
+// Renders niri on the discrete GPU to eliminate lag on external
+// monitors that are physically wired to the dGPU.
+// Trade-off: higher power consumption / shorter battery life.
+
+debug {
+    render-drm-device "$NVIDIA_RENDER"
+}
+DGPU_EOF
+
+echo "Wrote $DGPU_FILE"
+
+# ------------------------------------------------------------
+# Wire it into config.kdl, once.
+# ------------------------------------------------------------
+if grep -qF 'include "dgpu-render"' "$CONFIG"; then
+    echo "config.kdl already includes dgpu-render — nothing to add."
+else
+    printf '\n// Added by ujust setup-dgpu\ninclude "dgpu-render"\n' >> "$CONFIG"
+    echo "Added 'include \"dgpu-render\"' to the end of $CONFIG."
+fi
+
+echo ""
+echo "Done. Restart your niri session (or reboot) for changes to take effect."
+echo ""
+echo "NOTE: niri will now render on the dGPU ($NVIDIA_RENDER)."
+echo "This increases power consumption. To revert, remove the"
+echo "'include \"dgpu-render\"' line from $CONFIG and restart niri."

@@ -33,6 +33,8 @@ COPY niri/build_niri.sh /tmp/build_niri.sh
 COPY niri/config.kdl /tmp/niri-config.kdl
 COPY niri/setup-noctalia /tmp/setup-noctalia
 COPY niri/noctalia.just /tmp/noctalia.just
+COPY niri/setup-dgpu /tmp/setup-dgpu
+COPY niri/dgpu.just /tmp/dgpu.just
 
 RUN chmod +x /tmp/build_niri.sh && \
     /tmp/build_niri.sh && \
