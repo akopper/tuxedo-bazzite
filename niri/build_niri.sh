@@ -43,16 +43,19 @@ niri validate -c /etc/niri/config.kdl
 # ============================================================
 install -D -m 755 /tmp/setup-noctalia /usr/bin/setup-noctalia
 
+mkdir -p /usr/share/just
+cp /tmp/noctalia.just /usr/share/just/noctalia.just
+
 # ============================================================
 # setup-dgpu script + justfile command (NVIDIA variants only)
 # Configures niri to render on the dGPU to eliminate lag on
 # external monitors wired to the dGPU.
+# Only installed when the files are present (NVIDIA niri variant).
 # ============================================================
-install -D -m 755 /tmp/setup-dgpu /usr/bin/setup-dgpu
-
-mkdir -p /usr/share/just
-cp /tmp/noctalia.just /usr/share/just/noctalia.just
-cp /tmp/dgpu.just /usr/share/just/dgpu.just
+if [ -f /tmp/setup-dgpu ]; then
+    install -D -m 755 /tmp/setup-dgpu /usr/bin/setup-dgpu
+    cp /tmp/dgpu.just /usr/share/just/dgpu.just
+fi
 
 # ============================================================
 # Qt theming for niri session
