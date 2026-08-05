@@ -249,8 +249,8 @@ PIPX_GLOBAL_HOME="/opt/pipx"
 PIPX_GLOBAL_BIN_DIR="/usr/local/bin"
 export PIPX_GLOBAL_HOME PIPX_GLOBAL_BIN_DIR
 
-# Install dictux (voice dictation)
-pipx install --global dictux
+# Install dictux (voice dictation) - not on PyPI, install from GitHub
+pipx install --global "git+https://github.com/nitishkp001/dictux.git"
 
 # Install cptr (AI assistant)
 pipx install --global cptr
@@ -287,7 +287,7 @@ Requires=ydotoold.service
 [Service]
 Type=simple
 TimeoutStartSec=300s
-ExecStartPre=-/usr/bin/python3 -m pipx upgrade dictux
+ExecStartPre=-/usr/bin/pipx install --global --force "git+https://github.com/nitishkp001/dictux.git"
 ExecStart=/usr/local/bin/dictux
 Restart=on-failure
 RestartSec=5
@@ -305,7 +305,7 @@ Wants=network-online.target
 [Service]
 Type=simple
 TimeoutStartSec=300s
-ExecStartPre=-/usr/bin/python3 -m pip install --user --upgrade cptr
+ExecStartPre=-/usr/bin/pipx upgrade --global cptr
 ExecStart=/usr/local/bin/cptr run --headless
 Restart=on-failure
 RestartSec=5
