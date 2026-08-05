@@ -16,6 +16,7 @@ ARG AKMODS_PUBLIC_KEY_B64
 COPY tuxedo.repo /etc/yum.repos.d/tuxedo.repo
 COPY fixtuxedo /usr/bin/fixtuxedo
 COPY fixtuxedo.service /etc/systemd/system/fixtuxedo.service
+COPY 99-tuxedo-optimize.conf /usr/lib/dracut/dracut.conf.d/99-tuxedo-optimize.conf
 COPY build_tuxedo.sh /tmp/build_tuxedo.sh
 
 # Make script executable and run all installations in one layer

@@ -9,7 +9,7 @@ RELEASE="$(rpm -E %fedora)"
 # ============================================================
 # tmux and gnome-disk-utility are commonly useful on laptops.
 # Folded in from the former build-base.sh to reduce script count.
-rpm-ostree install tmux gnome-disk-utility
+rpm-ostree install tmux gnome-disk-utility ydotool pipx
 
 # Enable podman socket for container management
 systemctl enable podman.socket
@@ -237,7 +237,87 @@ cp ${DIST_DATA}/99-webcam.rules /etc/udev/rules.d/99-webcam.rules 2>/dev/null ||
 systemctl enable tccd.service 2>/dev/null || true
 systemctl enable tccd-sleep.service 2>/dev/null || true
 
+# ============================================================
+# Install pipx-managed apps (dictux, cptr)
+# ============================================================
+# These are installed system-wide via pipx --global so they survive
+# rebases and are available to all users.
+echo "Installing pipx-managed apps..."
+
+# Ensure pipx global dirs exist
+PIPX_GLOBAL_HOME="/opt/pipx"
+PIPX_GLOBAL_BIN_DIR="/usr/local/bin"
+export PIPX_GLOBAL_HOME PIPX_GLOBAL_BIN_DIR
+
+# Install dictux (voice dictation)
+pipx install --global dictux
+
+# Install cptr (AI assistant)
+pipx install --global cptr
+
+echo "pipx-managed apps installed."
+
+# ============================================================
+# Install systemd user service files for dictux + ydotoold
+# ============================================================
+mkdir -p /etc/skel/.config/systemd/user
+
+cat > /etc/skel/.config/systemd/user/ydotoold.service << 'YDSRV'
+[Unit]
+Description=ydotool daemon for Wayland input injection
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+ExecStart=/usr/bin/ydotoold
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=graphical-session.target
+YDSRV
+
+cat > /etc/skel/.config/systemd/user/dictux.service << 'DXSRV'
+[Unit]
+Description=Dictux voice dictation tray app
+After=graphical-session.target
+PartOf=graphical-session.target
+Requires=ydotoold.service
+
+[Service]
+Type=simple
+TimeoutStartSec=300s
+ExecStartPre=-/usr/bin/python3 -m pipx upgrade dictux
+ExecStart=/usr/local/bin/dictux
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=graphical-session.target
+DXSRV
+
+cat > /etc/skel/.config/systemd/user/cptr.service << 'CPTSRV'
+[Unit]
+Description=cptr - Your computer, from anywhere
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+TimeoutStartSec=300s
+ExecStartPre=-/usr/bin/python3 -m pip install --user --upgrade cptr
+ExecStart=/usr/local/bin/cptr run --headless
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target
+CPTSRV
+
+# Add PATH to skel bashrc
+echo 'export PATH="$PATH:/usr/local/bin"' >> /etc/skel/.bashrc
+
 # Clean up
 rm -rf /tmp/tcc-extract
 
-echo "Tuxedo drivers, yt6801, and Control Center installation completed!"
+echo "Tuxedo drivers, yt6801, Control Center, dictux, and cptr installation completed!"
