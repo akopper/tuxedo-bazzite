@@ -286,6 +286,7 @@ Requires=ydotoold.service
 
 [Service]
 Type=simple
+Environment=HF_HUB_OFFLINE=1
 ExecStart=/usr/local/bin/dictux
 Restart=on-failure
 RestartSec=5
