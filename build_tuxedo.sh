@@ -286,8 +286,6 @@ Requires=ydotoold.service
 
 [Service]
 Type=simple
-TimeoutStartSec=300s
-ExecStartPre=-/usr/bin/pipx install --global --force "git+https://github.com/nitishkp001/dictux.git"
 ExecStart=/usr/local/bin/dictux
 Restart=on-failure
 RestartSec=5
@@ -304,8 +302,6 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-TimeoutStartSec=300s
-ExecStartPre=-/usr/bin/pipx upgrade --global cptr
 ExecStart=/usr/local/bin/cptr run --headless
 Restart=on-failure
 RestartSec=5
