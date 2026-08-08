@@ -9,7 +9,7 @@ RELEASE="$(rpm -E %fedora)"
 # ============================================================
 # tmux and gnome-disk-utility are commonly useful on laptops.
 # Folded in from the former build-base.sh to reduce script count.
-rpm-ostree install tmux gnome-disk-utility ydotool pipx
+rpm-ostree install tmux gnome-disk-utility ydotool pipx elementary-files
 
 # Enable podman socket for container management
 systemctl enable podman.socket
