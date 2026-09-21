@@ -100,6 +100,11 @@ jobs:
 
       - name: Free Disk Space (Ubuntu)
         uses: ublue-os/remove-unwanted-software@v9
+        with:
+          # The action's apt cleanup fails on ubuntu-26.04 with
+          # "E: Unable to locate package powershell" (pwsh is not an apt package any more)
+          # and runs under `set -euo pipefail`, which would kill the job.
+          remove-large-packages: false
 
       - name: Get current date
         id: date
