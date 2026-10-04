@@ -12,10 +12,10 @@ All images are published to `ghcr.io/akopper/`:
 |---|---|---|
 | `tuxedo-bazzite` | `bazzite:stable` | Bazzite KDE Desktop with Tuxedo drivers |
 | `tuxedo-bazzite-gnome` | `bazzite-gnome:stable` | Bazzite GNOME Desktop with Tuxedo drivers |
-| `tuxedo-bazzite-nvidia` | `bazzite-nvidia:stable` | Bazzite KDE with NVIDIA drivers + Tuxedo drivers |
-| `tuxedo-bazzite-gnome-nvidia` | `bazzite-gnome-nvidia:stable` | Bazzite GNOME with NVIDIA drivers + Tuxedo drivers |
+| `tuxedo-bazzite-nvidia` | `bazzite-nvidia-open:stable` | Bazzite KDE with NVIDIA **open** drivers + Tuxedo drivers |
+| `tuxedo-bazzite-gnome-nvidia` | `bazzite-gnome-nvidia-open:stable` | Bazzite GNOME with NVIDIA **open** drivers + Tuxedo drivers |
 | `tuxedo-bazzite-gnome-niri` | `bazzite-gnome:stable` | Bazzite GNOME + niri (with Noctalia) + Tuxedo drivers |
-| `tuxedo-bazzite-gnome-niri-nvidia` | `bazzite-gnome-nvidia:stable` | Bazzite GNOME + niri (with Noctalia) + NVIDIA + Tuxedo drivers |
+| `tuxedo-bazzite-gnome-niri-nvidia` | `bazzite-gnome-nvidia-open:stable` | Bazzite GNOME + niri (with Noctalia) + NVIDIA + Tuxedo drivers |
 
 ## What's included
 

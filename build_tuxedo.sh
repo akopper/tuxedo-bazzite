@@ -115,9 +115,13 @@ build_and_sign_modules() {
 # /usr/src/tuxedo-drivers-<version>/. There is no
 # akmod-tuxedo-drivers package in the TUXEDO repo for Fedora 44,
 # so we build the modules manually from the DKMS source.
+# NOTE: The version must match the kernel flavor of the base image:
+# - ogc-lts (kernel 6.18, bazzite-*-nvidia): tuxedo-drivers >= 4.22 works
+# - ogc (kernel 7.2, bazzite-*-nvidia-open): needs tuxedo-drivers >= 4.24
 
 # Download and extract tuxedo-drivers DKMS source (avoid DKMS postinstall script)
-curl -s -o /tmp/tuxedo-drivers.rpm https://rpm.tuxedocomputers.com/fedora/${RELEASE}/x86_64/base/tuxedo-drivers-4.22.1-1.fc43.noarch.rpm
+# v4.24.0 is the latest release and includes kernel 7.x compatibility fixes
+curl -s -o /tmp/tuxedo-drivers.rpm https://rpm.tuxedocomputers.com/fedora/${RELEASE}/x86_64/base/tuxedo-drivers-4.24.0-1.fc43.noarch.rpm
 mkdir -p /usr/src
 cd /
 rpm2cpio /tmp/tuxedo-drivers.rpm | cpio -idmv || true

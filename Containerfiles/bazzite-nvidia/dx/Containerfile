@@ -1,5 +1,5 @@
 ## 1. BUILD ARGS
-ARG SOURCE_IMAGE="bazzite-nvidia"
+ARG SOURCE_IMAGE="bazzite-nvidia-open"
 ARG SOURCE_SUFFIX=""
 ARG SOURCE_TAG="stable"
 ARG AKMODS_PRIVATE_KEY_B64=""
