@@ -15,12 +15,29 @@
 
 set -e
 
-# Create /opt symlink for Tuxedo Control Center
-if [ ! -L "/opt/tuxedo-control-center" ]; then
-    ln -s /usr/share/tuxedo-control-center /opt/tuxedo-control-center
+# Create/repoint the /opt symlink for Tuxedo Control Center.
+# Older images left /var/opt/tuxedo-control-center pointing at a stale payload
+# copy under /var/lib, so "create only if missing" is not enough: the symlink
+# exists but points at the wrong place.
+if [ "$(readlink -f /opt/tuxedo-control-center 2>/dev/null)" != "/usr/share/tuxedo-control-center" ]; then
+    mkdir -p /var/opt
+    ln -sfn /usr/share/tuxedo-control-center /var/opt/tuxedo-control-center
     echo "Tuxedo Control Center linked to /opt directory"
 else
-    echo "Tuxedo symlink at /opt already exists, no fix needed"
+    echo "Tuxedo symlink at /opt already correct, no fix needed"
+fi
+
+# TCC 3.1.x ships the tray autostart system-wide in /etc/xdg/autostart.
+# Users created by older images still carry a per-user copy that /etc/skel
+# dropped into ~/.config/autostart, which would start a second tray icon.
+if [ -f /etc/xdg/autostart/tuxedo-control-center-tray.desktop ]; then
+    for f in /home/*/.config/autostart/tuxedo-control-center-tray.desktop; do
+        [ -f "$f" ] || continue
+        if grep -q '/opt/tuxedo-control-center' "$f"; then
+            rm -f "$f"
+            echo "Removed stale tray autostart $f"
+        fi
+    done
 fi
 
 # ============================================================

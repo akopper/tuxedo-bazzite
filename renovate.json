@@ -1,7 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:recommended"],
-  "platform": "github",
   "labels": ["dependencies"],
   "schedule": ["before 5am on Monday"],
   "assignees": ["akopper"],
@@ -9,30 +8,85 @@
   "automergeType": "pr",
   "packageRules": [
     {
+      "description": "Base images: never automerge major updates",
       "matchDatasources": ["docker"],
       "matchUpdateTypes": ["major"],
       "automerge": false
     },
     {
+      "description": "Base images: automerge minor/patch/digest updates",
       "matchDatasources": ["docker"],
       "matchUpdateTypes": ["minor", "patch", "digest"],
       "automerge": true,
       "automergeType": "pr"
     },
     {
+      "description": "GitHub Actions: automerge",
       "matchManagers": ["github-actions"],
       "automerge": true,
       "automergeType": "pr"
+    },
+    {
+      "description": "TUXEDO/TCC and kernel-module deps: never automerge - a new version must be built and (for TCC) checked against the running tccd before merging",
+      "matchDatasources": ["rpm", "git-refs"],
+      "automerge": false
+    },
+    {
+      "description": "pipx tools: automerge patch/minor only",
+      "matchDatasources": ["pypi"],
+      "matchUpdateTypes": ["major"],
+      "automerge": false
     }
   ],
   "customManagers": [
     {
       "customType": "regex",
-      "fileMatch": ["^Containerfiles/.*/Containerfile$"],
-      "matchStrings": [
-        "FROM ghcr.io/ublue-os/(?<depName>[^:]+):(?<currentValue>[^\\s]+)"
-      ],
-      "datasourceTemplate": "docker"
+      "description": "TUXEDO Control Center RPM. The install in build_tuxedo.sh expects the 3.1.x packaging (units in /usr/lib/systemd/system, polkit/dbus/udev shipped directly) - re-check that section before dropping below 3.1.0. NOTE: the '44' in the registryUrl must match the Fedora release of the base image (dir layout: /fedora/<release>/x86_64/base/repodata/).",
+      "managerFilePatterns": ["/^build_tuxedo\\.sh$/"],
+      "matchStrings": ["TCC_VERSION=\"(?<currentValue>[^\"]+)\""],
+      "depNameTemplate": "tuxedo-control-center",
+      "datasourceTemplate": "rpm",
+      "registryUrlTemplate": "https://rpm.tuxedocomputers.com/fedora/44/x86_64/base/repodata",
+      "versioningTemplate": "loose",
+      "extractVersionTemplate": "^(?<version>[^-]+)"
+    },
+    {
+      "customType": "regex",
+      "description": "tuxedo-drivers DKMS source RPM. The FC release suffix (e.g. -1.fc43) is part of the version on purpose. NOTE: the '44' in the registryUrl must match the Fedora release of the base image.",
+      "managerFilePatterns": ["/^build_tuxedo\\.sh$/"],
+      "matchStrings": ["TUXEDO_DRIVERS_VERSION=\"(?<currentValue>[^\"]+)\""],
+      "depNameTemplate": "tuxedo-drivers",
+      "datasourceTemplate": "rpm",
+      "registryUrlTemplate": "https://rpm.tuxedocomputers.com/fedora/44/x86_64/base/repodata",
+      "versioningTemplate": "loose"
+    },
+    {
+      "customType": "regex",
+      "description": "yt6801 Ethernet driver (h4rm00n fork, kernel 6.15+ patches): pinned commit on the fork's main branch",
+      "managerFilePatterns": ["/^build_tuxedo\\.sh$/"],
+      "matchStrings": ["YT6801_COMMIT=\"(?<currentDigest>[a-f0-9]{40})\""],
+      "depNameTemplate": "h4rm00n/yt6801-linux-driver",
+      "packageNameTemplate": "https://github.com/h4rm00n/yt6801-linux-driver",
+      "currentValueTemplate": "main",
+      "datasourceTemplate": "git-refs"
+    },
+    {
+      "customType": "regex",
+      "description": "dictux (voice dictation): pinned commit on the master branch, installed from GitHub because it is not on PyPI",
+      "managerFilePatterns": ["/^build_tuxedo\\.sh$/"],
+      "matchStrings": ["DICTUX_COMMIT=\"(?<currentDigest>[a-f0-9]{40})\""],
+      "depNameTemplate": "nitishkp001/dictux",
+      "packageNameTemplate": "https://github.com/nitishkp001/dictux",
+      "currentValueTemplate": "master",
+      "datasourceTemplate": "git-refs"
+    },
+    {
+      "customType": "regex",
+      "description": "pipx-installed PyPI tools (cptr)",
+      "managerFilePatterns": ["/^build_tuxedo\\.sh$/"],
+      "matchStrings": ["CPTR_VERSION=\"(?<currentValue>[^\"]+)\""],
+      "depNameTemplate": "cptr",
+      "datasourceTemplate": "pypi"
     }
   ]
 }

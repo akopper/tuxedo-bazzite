@@ -5,6 +5,22 @@ set -ouex pipefail
 RELEASE="$(rpm -E %fedora)"
 
 # ============================================================
+# Pinned dependency versions
+# ============================================================
+# These pins are kept up to date automatically by Renovate
+# (see renovate.json -> customManagers). Do not change the format
+# of the lines below without updating renovate.json.
+TUXEDO_DRIVERS_VERSION="4.24.0-1.fc43"   # must be >= 4.24 for the 7.x kernels (ogc)
+# 3.1.x reworked the packaging (units in /usr/lib/systemd/system, polkit/
+# dbus/udev shipped directly, desktop file renamed), which is exactly why the
+# TCC section installs the RPM instead of copying dist-data files. Do not go
+# back below 3.1.0 without reworking that section again.
+TCC_VERSION="3.1.2"
+YT6801_COMMIT="36bfc255f1ad7fc1796652612a4f10e7487d4c82"
+DICTUX_COMMIT="99a49cbc2a3886c8eba6106d9c5ed29adf4c0ae5"
+CPTR_VERSION="0.9.21"
+
+# ============================================================
 # Base utilities
 # ============================================================
 # tmux and gnome-disk-utility are commonly useful on laptops.
@@ -121,7 +137,8 @@ build_and_sign_modules() {
 
 # Download and extract tuxedo-drivers DKMS source (avoid DKMS postinstall script)
 # v4.24.0 is the latest release and includes kernel 7.x compatibility fixes
-curl -s -o /tmp/tuxedo-drivers.rpm https://rpm.tuxedocomputers.com/fedora/${RELEASE}/x86_64/base/tuxedo-drivers-4.24.0-1.fc43.noarch.rpm
+# -fsSL: fail loudly on 404/HTML error pages instead of feeding them to rpm2cpio
+curl -fsSL -o /tmp/tuxedo-drivers.rpm https://rpm.tuxedocomputers.com/fedora/${RELEASE}/x86_64/base/tuxedo-drivers-${TUXEDO_DRIVERS_VERSION}.noarch.rpm
 mkdir -p /usr/src
 cd /
 rpm2cpio /tmp/tuxedo-drivers.rpm | cpio -idmv || true
@@ -148,8 +165,12 @@ build_and_sign_modules "${TUXEDO_SRC_DIR}" "tuxedo-drivers"
 cd /tmp
 
 echo "Cloning yt6801 driver with kernel 6.15+ compatibility..."
+# Pinned to a commit (not a branch tip) so builds are reproducible.
+# Renovate bumps YT6801_COMMIT when the fork's main branch moves.
 git clone https://github.com/h4rm00n/yt6801-linux-driver
 cd yt6801-linux-driver
+git checkout "${YT6801_COMMIT}"
+echo "yt6801 checked out at ${YT6801_COMMIT}"
 
 BUILD_DIR="/tmp/_kmod_build_${KERNEL_VERSION}"
 mkdir -p "${BUILD_DIR}"
@@ -168,78 +189,83 @@ modinfo yt6801 2>/dev/null && echo "yt6801 module found!" || echo "yt6801 module
 # ============================================================
 # Install and configure Tuxedo Control Center
 # ============================================================
-# Download and extract TCC RPM directly to avoid dependency issues
-# (tuxedo-control-center depends on dkms and tuxedo-drivers which
-# trigger DKMS postinstall scripts that fail in the CI container)
+# TCC 3.1.x is packaged properly for Fedora: systemd units in
+# /usr/lib/systemd/system, polkit/dbus/udev rules at their standard
+# paths, desktop + tray autostart shipped by the RPM. So install the
+# RPM instead of hand-copying files out of the payload (which is what
+# the 3.0.x line forced us to do).
+#
+# Two things still need manual care:
+#  1. It cannot be installed via dnf: the Requires on
+#     "(libayatana-appindicator3-1 or ...)" is unsatisfiable on Fedora
+#     (no package provides it), and pulling tuxedo-drivers/dkms would
+#     run module scriptlets that fail in the CI container.
+#     -> rpm -i --nodeps --noscripts
+#  2. In ostree images /opt is a relative symlink to var/opt and
+#     /var/opt does not exist in the base image, so rpm cannot unpack
+#     anything below /opt. We create /var/opt, install, then move the
+#     payload into the immutable /usr and leave a symlink behind.
 cd /tmp
 
-curl -s -o /tmp/tuxedo-control-center.rpm https://rpm.tuxedocomputers.com/fedora/${RELEASE}/x86_64/base/tuxedo-control-center_3.0.6.rpm
+# -fsSL: a removed version must abort the build with a clear HTTP error,
+# not silently save a 404 page and explode later
+curl -fsSL -o /tmp/tuxedo-control-center.rpm https://rpm.tuxedocomputers.com/fedora/${RELEASE}/x86_64/base/tuxedo-control-center_${TCC_VERSION}.rpm
 
-# Extract TCC RPM to a temporary directory (avoid /opt symlink issues
-# in ostree containers where /opt -> /var/opt)
-mkdir -p /tmp/tcc-extract
-cd /tmp/tcc-extract
-rpm2cpio /tmp/tuxedo-control-center.rpm | cpio -idmv || true
-cd /tmp
+# rpm cannot create files through the /opt -> var/opt symlink.
+# Clear any pre-existing entry first, otherwise rpm would install *through*
+# a stale symlink and the mv below would move the link instead of the payload.
+mkdir -p /var/opt
+rm -rf /var/opt/tuxedo-control-center
 
-# Verify extraction succeeded
-if [ ! -d /tmp/tcc-extract/opt/tuxedo-control-center ]; then
-    echo "ERROR: TCC extraction failed - /tmp/tcc-extract/opt/tuxedo-control-center not found"
+# --noscripts: posttrans calls systemctl for services that cannot run here
+# --nodeps: see (1) above
+rpm -i --nodeps --noscripts /tmp/tuxedo-control-center.rpm
+
+# Move the payload out of /var (mutable) into /usr (immutable, ostree-managed)
+mv /var/opt/tuxedo-control-center /usr/share/tuxedo-control-center
+ln -sfn /usr/share/tuxedo-control-center /var/opt/tuxedo-control-center
+
+# The packaged units and desktop entries still point at /opt, while our
+# payload now lives in /usr/share. Rewrite those three files - and fail
+# loudly if a future version renames them, instead of shipping a TCC whose
+# units point nowhere.
+for f in \
+    /usr/lib/systemd/system/tccd.service \
+    /usr/share/applications/com.tuxedocomputers.tcc.desktop \
+    /etc/xdg/autostart/tuxedo-control-center-tray.desktop ; do
+    if [ ! -f "${f}" ]; then
+        echo "ERROR: ${f} not shipped by tuxedo-control-center ${TCC_VERSION} - packaging changed, rework this section"
+        exit 1
+    fi
+    sed -i 's|/opt/tuxedo-control-center|/usr/share/tuxedo-control-center|g' "${f}"
+done
+
+# The polkit policy is what allows the GUI to talk to tccd
+if [ ! -f /usr/share/polkit-1/actions/com.tuxedocomputers.tccd-service.policy ]; then
+    echo "ERROR: polkit policy missing from tuxedo-control-center ${TCC_VERSION} - packaging changed"
     exit 1
 fi
 
-# Install TCC to /usr/share (ostree prefers /usr/share over /opt)
-mkdir -p /usr/share
-cp -a /tmp/tcc-extract/opt/tuxedo-control-center /usr/share/tuxedo-control-center
+# Electron needs the sandbox helper setuid (the RPM ships it 0755)
+chmod 4755 /usr/share/tuxedo-control-center/chrome-sandbox
 
-# Create /var/opt symlink for runtime compatibility
-mkdir -p /var/opt
-ln -sf /usr/share/tuxedo-control-center /var/opt/tuxedo-control-center
-
-# Create bin symlink
-rm -f /usr/bin/tuxedo-control-center
-ln -s /usr/share/tuxedo-control-center/tuxedo-control-center /usr/bin/tuxedo-control-center
-
-# Set SUID on chrome-sandbox (required by Electron 5+)
-chmod 4755 /usr/share/tuxedo-control-center/chrome-sandbox 2>/dev/null || true
+# CLI convenience (3.1.x no longer ships this link)
+ln -sfn /usr/share/tuxedo-control-center/tuxedo-control-center /usr/bin/tuxedo-control-center
 
 # ============================================================
-# Install service files, polkit, dbus, udev, desktop files
-# from the TCC dist-data directory (normally done by RPM posttrans)
+# Migrate away from files the 3.0.x approach installed into /etc
 # ============================================================
-DIST_DATA=/usr/share/tuxedo-control-center/resources/dist/tuxedo-control-center/data/dist-data
+# /etc survives rebases, so leftovers from older images would shadow the
+# vendor units now living in /usr/lib/systemd/system.
+rm -f /etc/systemd/system/tccd.service /etc/systemd/system/tccd-sleep.service
 
-# Service files
-cp ${DIST_DATA}/tccd.service /etc/systemd/system/tccd.service
-cp ${DIST_DATA}/tccd-sleep.service /etc/systemd/system/tccd-sleep.service
+# The tray autostart moved from /etc/skel into /etc/xdg/autostart; the old
+# skel copy would start a second tray for newly created users.
+rm -f /etc/skel/.config/autostart/tuxedo-control-center-tray.desktop
 
-# Fix service paths: replace /opt with /usr/share
-sed -i 's|/opt/tuxedo-control-center|/usr/share/tuxedo-control-center|g' /etc/systemd/system/tccd.service
-sed -i 's|/opt/tuxedo-control-center|/usr/share/tuxedo-control-center|g' /etc/systemd/system/tccd-sleep.service
-
-# Polkit policies
-mkdir -p /usr/share/polkit-1/actions
-cp ${DIST_DATA}/com.tuxedocomputers.tccd.policy /usr/share/polkit-1/actions/com.tuxedocomputers.tccd.policy
-cp ${DIST_DATA}/com.tuxedocomputers.tomte.policy /usr/share/polkit-1/actions/com.tuxedocomputers.tomte.policy 2>/dev/null || true
-
-# DBus config
-mkdir -p /usr/share/dbus-1/system.d
-cp ${DIST_DATA}/com.tuxedocomputers.tccd.conf /usr/share/dbus-1/system.d/com.tuxedocomputers.tccd.conf 2>/dev/null || true
-
-# Desktop file
-cp ${DIST_DATA}/tuxedo-control-center.desktop /usr/share/applications/tuxedo-control-center.desktop 2>/dev/null || true
-sed -i 's|/opt/tuxedo-control-center|/usr/share/tuxedo-control-center|g' /usr/share/applications/tuxedo-control-center.desktop
-
-# Autostart desktop file
-mkdir -p /etc/skel/.config/autostart
-cp ${DIST_DATA}/tuxedo-control-center-tray.desktop /etc/skel/.config/autostart/tuxedo-control-center-tray.desktop 2>/dev/null || true
-
-# Udev rules
-cp ${DIST_DATA}/99-webcam.rules /etc/udev/rules.d/99-webcam.rules 2>/dev/null || true
-
-# Enable services
-systemctl enable tccd.service 2>/dev/null || true
-systemctl enable tccd-sleep.service 2>/dev/null || true
+# Enable services (units are vendor units from the RPM)
+systemctl enable tccd.service
+systemctl enable tccd-sleep.service
 
 # ============================================================
 # Install pipx-managed apps (dictux, cptr)
@@ -253,11 +279,12 @@ PIPX_GLOBAL_HOME="/opt/pipx"
 PIPX_GLOBAL_BIN_DIR="/usr/local/bin"
 export PIPX_GLOBAL_HOME PIPX_GLOBAL_BIN_DIR
 
-# Install dictux (voice dictation) - not on PyPI, install from GitHub
-pipx install --global "git+https://github.com/nitishkp001/dictux.git"
+# Install dictux (voice dictation) - not on PyPI, install from GitHub.
+# Pinned to a commit: Renovate bumps DICTUX_COMMIT when master moves.
+pipx install --global "git+https://github.com/nitishkp001/dictux.git@${DICTUX_COMMIT}"
 
-# Install cptr (AI assistant)
-pipx install --global cptr
+# Install cptr (AI assistant) - Renovate bumps CPTR_VERSION from PyPI
+pipx install --global "cptr==${CPTR_VERSION}"
 
 echo "pipx-managed apps installed."
 
@@ -318,7 +345,7 @@ CPTSRV
 # Add PATH to skel bashrc
 echo 'export PATH="$PATH:/usr/local/bin"' >> /etc/skel/.bashrc
 
-# Clean up
-rm -rf /tmp/tcc-extract
+# Clean up the downloaded RPM so it does not end up in the image layer
+rm -f /tmp/tuxedo-control-center.rpm
 
 echo "Tuxedo drivers, yt6801, Control Center, dictux, and cptr installation completed!"
