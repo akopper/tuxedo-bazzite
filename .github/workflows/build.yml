@@ -16,6 +16,13 @@ on:
 env:
   IMAGE_DESC: "Bazzite with Tuxedo drivers (TCC + kmod) for Tuxedo/Clevo laptops"
   IMAGE_REGISTRY: "ghcr.io/${{ github.repository_owner }}"
+  # Variants to build: comma separated allowlist, matched against the
+  # Containerfiles/<dir> path. "bazzite-gnome-niri-nvidia" therefore matches
+  # Containerfiles/bazzite-gnome-niri-nvidia/dx/Containerfile.
+  # Set to "*" to build every Containerfile again. The other Containerfiles
+  # stay in the repo for reference, they are just not built any more (each
+  # image costs ~45 minutes of CI).
+  ENABLED_VARIANTS: "bazzite-gnome-niri-nvidia"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
@@ -35,8 +42,31 @@ jobs:
         id: set-matrix
         run: |
           files=$(find Containerfiles -type f -name Containerfile)
-          echo "Found containerfiles:"
-          echo "$files"
+
+          # Restrict to ENABLED_VARIANTS unless it is "*"
+          if [ "${ENABLED_VARIANTS}" != "*" ]; then
+            kept=""
+            while IFS= read -r file; do
+              [ -n "$file" ] || continue
+              dir=${file#Containerfiles/}
+              dir=${dir%/Containerfile}
+              for allowed in ${ENABLED_VARIANTS//,/ }; do
+                case "$dir" in
+                  "$allowed"|"$allowed"/*) kept="${kept}${file}"$'\n'; break ;;
+                esac
+              done
+            done <<< "$files"
+            files=${kept%$'\n'}
+            echo "ENABLED_VARIANTS=${ENABLED_VARIANTS} selected:"
+            echo "${files:-<none>}"
+            if [ -z "${files}" ]; then
+              echo "ERROR: ENABLED_VARIANTS does not match any Containerfile. Fix the allowlist in the workflow env." >&2
+              exit 1
+            fi
+          else
+            echo "ENABLED_VARIANTS=* - building every Containerfile:"
+            echo "$files"
+          fi
 
           matrix_entries="[]"
           while IFS= read -r file; do
