@@ -10,7 +10,7 @@ RELEASE="$(rpm -E %fedora)"
 # These pins are kept up to date automatically by Renovate
 # (see renovate.json -> customManagers). Do not change the format
 # of the lines below without updating renovate.json.
-TUXEDO_DRIVERS_VERSION="4.24.0-1.fc43"   # must be >= 4.24 for the 7.x kernels (ogc)
+TUXEDO_DRIVERS_VERSION="4.25.0-1.fc43"   # must be >= 4.24 for the 7.x kernels (ogc)
 # 3.1.x reworked the packaging (units in /usr/lib/systemd/system, polkit/
 # dbus/udev shipped directly, desktop file renamed), which is exactly why the
 # TCC section installs the RPM instead of copying dist-data files. Do not go
