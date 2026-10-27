@@ -6,6 +6,7 @@
   "assignees": ["akopper"],
   "automerge": true,
   "automergeType": "pr",
+  "platformAutomerge": true,
   "packageRules": [
     {
       "description": "Base images: never automerge major updates",
@@ -27,8 +28,15 @@
       "automergeType": "pr"
     },
     {
-      "description": "TUXEDO/TCC and kernel-module deps: never automerge - a new version must be built and (for TCC) checked against the running tccd before merging",
+      "description": "TUXEDO drivers and pinned git refs (yt6801, dictux): automerge - the image build compiles and installs them, so a broken bump fails the PR checks",
       "matchDatasources": ["rpm", "git-refs"],
+      "automerge": true,
+      "automergeType": "pr"
+    },
+    {
+      "description": "TUXEDO Control Center: never automerge - the packaging changed between 3.0.x and 3.1.x, and the TCC section in build_tuxedo.sh depends on that layout",
+      "matchDatasources": ["rpm"],
+      "matchDepNames": ["tuxedo-control-center"],
       "automerge": false
     },
     {
