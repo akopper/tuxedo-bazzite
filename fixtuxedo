@@ -15,6 +15,17 @@
 
 set -e
 
+# Remove stale TCC units that older images installed into /etc. /etc survives
+# rebases and ostree keeps locally modified copies, so such a unit outlives the
+# image that wrote it: it shadows the vendor unit in /usr/lib/systemd/system
+# and keeps pointing at the old payload under /var/lib.
+for u in /etc/systemd/system/tccd.service /etc/systemd/system/tccd-sleep.service; do
+    if [ -f "$u" ]; then
+        rm -f "$u"
+        echo "Removed stale unit $u"
+    fi
+done
+
 # Create/repoint the /opt symlink for Tuxedo Control Center.
 # Older images left /var/opt/tuxedo-control-center pointing at a stale payload
 # copy under /var/lib, so "create only if missing" is not enough: the symlink
@@ -25,6 +36,14 @@ if [ "$(readlink -f /opt/tuxedo-control-center 2>/dev/null)" != "/usr/share/tuxe
     echo "Tuxedo Control Center linked to /opt directory"
 else
     echo "Tuxedo symlink at /opt already correct, no fix needed"
+fi
+
+# Drop the duplicate payload older images left in /var/lib (only once /opt
+# points at /usr/share and that copy is complete).
+if [ -d /var/lib/tuxedo-control-center ] && [ ! -L /var/lib/tuxedo-control-center ] \
+   && [ -x /usr/share/tuxedo-control-center/tuxedo-control-center ]; then
+    rm -rf /var/lib/tuxedo-control-center
+    echo "Removed stale TCC payload from /var/lib"
 fi
 
 # TCC 3.1.x ships the tray autostart system-wide in /etc/xdg/autostart.
