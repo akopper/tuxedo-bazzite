@@ -348,4 +348,61 @@ echo 'export PATH="$PATH:/usr/local/bin"' >> /etc/skel/.bashrc
 # Clean up the downloaded RPM so it does not end up in the image layer
 rm -f /tmp/tuxedo-control-center.rpm
 
-echo "Tuxedo drivers, yt6801, Control Center, dictux, and cptr installation completed!"
+# ============================================================
+# Sunshine (game streaming host)
+# ============================================================
+# Installed as an RPM rather than the flatpak, on purpose:
+#  - the flatpak cannot use KMS capture (it logs "AppImage and Flatpak do
+#    not support KMS capture"), which leaves only the XDG portal path
+#  - the portal path does not work on this hardware: niri serves a
+#    DMA-BUF-only screencast stream whose formats never negotiate with
+#    Sunshine ("no more input formats", see niri#3145 / pipewire#5353), and
+#    the hybrid AMD-iGPU + NVIDIA-dGPU split breaks the dmabuf handoff in
+#    mutter too
+# KMS capture bypasses both: it reads the scanout buffer straight from DRM,
+# so it behaves the same on niri, GNOME and Plasma and needs no compositor
+# cooperation. NVENC still cannot consume the iGPU framebuffer, so Sunshine
+# settles on the VCN/vulkan encoder - that is expected and streams fine on
+# this laptop.
+#
+# COPR: upstream LizardByte stable channel (same 2026.914 build the flatpak
+# shipped). Bazzite docs prefer the community pvermeer/sunshine COPR because
+# it tracks Fedora majors; swap the URL below if this one falls behind.
+curl -fsSL -o "/etc/yum.repos.d/_copr:copr.fedorainfracloud.org:lizardbyte:stable.repo" \
+    "https://copr.fedorainfracloud.org/coprs/lizardbyte/stable/repo/fedora-${RELEASE}/lizardbyte-stable-fedora-${RELEASE}.repo"
+# Import the repo key up front: the build has no tty to confirm it, and an
+# unconfirmed key import aborts the transaction.
+curl -fsSL "https://download.copr.fedorainfracloud.org/results/lizardbyte/stable/pubkey.gpg" -o /tmp/lizardbyte.asc
+rpm --import /tmp/lizardbyte.asc
+rm -f /tmp/lizardbyte.asc
+
+rpm-ostree install Sunshine
+
+# CAP_SYS_ADMIN is what KMS capture needs, CAP_SYS_NICE lets Sunshine raise
+# its own scheduling priority. Ostree preserves file capabilities (gamescope
+# and newuidmap ship with them), so this sticks across updates - unlike a
+# runtime "sudo setcap" on an ostree system, which cannot write to /usr.
+setcap cap_sys_admin,cap_sys_nice+ep /usr/bin/sunshine
+getcap /usr/bin/sunshine
+
+# Force KMS capture for every user. Auto-detection is unreliable here: with
+# no capture option Sunshine probes wayland/portal first and retries there,
+# and when it does reach kms it tries NVENC before falling back to vulkan.
+# "name=value" is a documented Sunshine command line override, so this needs
+# no per-user config file.
+mkdir -p /usr/lib/systemd/user/app-dev.lizardbyte.app.Sunshine.service.d
+cat > /usr/lib/systemd/user/app-dev.lizardbyte.app.Sunshine.service.d/10-kms.conf << 'SUNKMS'
+[Service]
+# The RPM ships ExecStart=/usr/bin/sunshine; force KMS capture.
+ExecStart=
+ExecStart=/usr/bin/sunshine capture=kms
+SUNKMS
+
+# The RPM ships /usr/lib/systemd/user/app-dev.lizardbyte.app.Sunshine.service
+# (Alias=sunshine.service, WantedBy=graphical-session.target). Link it in for
+# every user: niri-session and GNOME both reach graphical-session.target.
+mkdir -p /etc/systemd/user/graphical-session.target.wants
+ln -sf /usr/lib/systemd/user/app-dev.lizardbyte.app.Sunshine.service \
+    /etc/systemd/user/graphical-session.target.wants/app-dev.lizardbyte.app.Sunshine.service
+
+echo "Tuxedo drivers, yt6801, Control Center, dictux, cptr, and Sunshine installation completed!"

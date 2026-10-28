@@ -25,6 +25,7 @@ All images are published to `ghcr.io/akopper/`:
 - **[niri](https://github.com/niri-wm/niri)** — scrollable-tiling Wayland compositor (niri variants only)
 - **[Noctalia](https://noctalia.dev/)** — native C++/OpenGL ES shell for niri (niri variants only)
 - **dGPU rendering for external monitors** — `ujust setup-dgpu` configures niri to render on the NVIDIA dGPU, eliminating lag on external monitors wired to the dGPU (NVIDIA niri variant only)
+- **[Sunshine](https://app.lizardbyte.dev/)** — game streaming host (Moonlight), installed as an RPM with `CAP_SYS_ADMIN` so it captures via KMS. The flatpak cannot do KMS capture, and the XDG-portal path it is stuck with does not work on niri or on hybrid AMD/NVIDIA Wayland setups. Runs as the systemd user unit `sunshine.service` from `graphical-session.target`
 - Everything from upstream Bazzite
 
 ---
