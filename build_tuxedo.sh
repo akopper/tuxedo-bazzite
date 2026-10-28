@@ -365,14 +365,18 @@ rm -f /tmp/tuxedo-control-center.rpm
 # settles on the VCN/vulkan encoder - that is expected and streams fine on
 # this laptop.
 #
-# COPR: upstream LizardByte stable channel (same 2026.914 build the flatpak
-# shipped). Bazzite docs prefer the community pvermeer/sunshine COPR because
-# it tracks Fedora majors; swap the URL below if this one falls behind.
-curl -fsSL -o "/etc/yum.repos.d/_copr:copr.fedorainfracloud.org:lizardbyte:stable.repo" \
-    "https://copr.fedorainfracloud.org/coprs/lizardbyte/stable/repo/fedora-${RELEASE}/lizardbyte-stable-fedora-${RELEASE}.repo"
+# COPR: upstream LizardByte channel. This is the beta channel, not stable,
+# on purpose: stable still ships 2026.914, which has the duplicate-client-
+# certificate bug from LizardByte/Sunshine#5696 - every re-pair appends a
+# second entry for the same phone certificate, and the authorization check
+# ("exactly one enabled match") then rejects the client with
+# "SSL Verification error :: Client certificate identity is not enabled".
+# Fixed by LizardByte/Sunshine#5737, which is only in beta/nightly builds.
+curl -fsSL -o "/etc/yum.repos.d/_copr:copr.fedorainfracloud.org:lizardbyte:beta.repo" \
+    "https://copr.fedorainfracloud.org/coprs/lizardbyte/beta/repo/fedora-${RELEASE}/lizardbyte-beta-fedora-${RELEASE}.repo"
 # Import the repo key up front: the build has no tty to confirm it, and an
 # unconfirmed key import aborts the transaction.
-curl -fsSL "https://download.copr.fedorainfracloud.org/results/lizardbyte/stable/pubkey.gpg" -o /tmp/lizardbyte.asc
+curl -fsSL "https://download.copr.fedorainfracloud.org/results/lizardbyte/beta/pubkey.gpg" -o /tmp/lizardbyte.asc
 rpm --import /tmp/lizardbyte.asc
 rm -f /tmp/lizardbyte.asc
 
