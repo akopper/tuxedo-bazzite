@@ -404,5 +404,10 @@ SUNKMS
 mkdir -p /etc/systemd/user/graphical-session.target.wants
 ln -sf /usr/lib/systemd/user/app-dev.lizardbyte.app.Sunshine.service \
     /etc/systemd/user/graphical-session.target.wants/app-dev.lizardbyte.app.Sunshine.service
+# systemd only materialises the unit's "Alias=sunshine.service" when it is
+# enabled through systemctl, not when it is linked by hand - ship the alias
+# explicitly so "systemctl --user status sunshine" works.
+ln -sf /usr/lib/systemd/user/app-dev.lizardbyte.app.Sunshine.service \
+    /etc/systemd/user/sunshine.service
 
 echo "Tuxedo drivers, yt6801, Control Center, dictux, cptr, and Sunshine installation completed!"
