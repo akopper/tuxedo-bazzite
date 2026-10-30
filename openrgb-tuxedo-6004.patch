@@ -1,0 +1,23 @@
+Upstream OpenRGB (>= 1.0rc2, MR !3167) ships a ClevoKeyboardController for
+the ITE 8291 per-key RGB keyboard, but its detector only registers USB PID
+0x600B. The TUXEDO Stellaris/Polaris Gen4 keyboard enumerates as 048d:6004
+and uses the same ITE 8291 protocol (tuxedo-drivers handles PID 6004, 600A,
+600B and CE00 with the same code); the HID report descriptor of the vendor
+interface is identical (usage page 0xFF03, usage 0x01), which is what
+OpenRGB matches on. Register the extra PID so the keyboard is detected.
+
+--- a/Controllers/ClevoKeyboardController/ClevoKeyboardControllerDetect.cpp
++++ b/Controllers/ClevoKeyboardController/ClevoKeyboardControllerDetect.cpp
+@@ -25,6 +25,7 @@
+ | These are ITE 8291 per-key RGB keyboard controllers   |
+ \*-----------------------------------------------------*/
+ #define CLEVO_KEYBOARD_PID_600B        0x600B
++#define CLEVO_KEYBOARD_PID_6004        0x6004
+ 
+ void DetectClevoKeyboardControllers(hid_device_info* info, const std::string& name)
+ {
+@@ -41,3 +42,4 @@
+ }
+ 
+ REGISTER_HID_DETECTOR_PU("Clevo Keyboard", DetectClevoKeyboardControllers, 0x048D, 0x600B, 0xFF03, 0x01);
++REGISTER_HID_DETECTOR_PU("Clevo Keyboard", DetectClevoKeyboardControllers, 0x048D, 0x6004, 0xFF03, 0x01);

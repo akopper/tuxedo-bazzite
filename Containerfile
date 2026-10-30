@@ -5,19 +5,33 @@ ARG SOURCE_TAG="stable"
 ARG AKMODS_PRIVATE_KEY_B64=""
 ARG AKMODS_PUBLIC_KEY_B64=""
 
-### 2. SOURCE IMAGE
+### 2. BUILDER STAGE: patched OpenRGB RPM
+# Upstream OpenRGB knows the Clevo/TUXEDO per-key RGB keyboard (ITE 8291)
+# but only registers USB PID 0x600B. The Stellaris/Polaris Gen4 keyboards
+# enumerate as 048d:6004 on the same protocol, so the Fedora source package
+# is rebuilt here with one additional HID detector line. A separate stage
+# keeps the Qt5 toolchain and the ~250 build-dependency packages out of the
+# final image; only /out/openrgb.rpm is copied over.
+FROM ghcr.io/ublue-os/${SOURCE_IMAGE}${SOURCE_SUFFIX}:${SOURCE_TAG} AS openrgb-builder
+
+COPY openrgb-tuxedo-6004.patch /tmp/openrgb-tuxedo-6004.patch
+COPY build_openrgb.sh /tmp/build_openrgb.sh
+RUN chmod +x /tmp/build_openrgb.sh && /tmp/build_openrgb.sh
+
+### 3. SOURCE IMAGE
 FROM ghcr.io/ublue-os/${SOURCE_IMAGE}${SOURCE_SUFFIX}:${SOURCE_TAG}
 
 # Re-declare build args after FROM (ARGs before FROM are only for FROM itself)
 ARG AKMODS_PRIVATE_KEY_B64
 ARG AKMODS_PUBLIC_KEY_B64
 
-### 3. MODIFICATIONS
+### 4. MODIFICATIONS
 COPY tuxedo.repo /etc/yum.repos.d/tuxedo.repo
 COPY fixtuxedo /usr/bin/fixtuxedo
 COPY fixtuxedo.service /etc/systemd/system/fixtuxedo.service
 COPY 99-tuxedo-optimize.conf /usr/lib/dracut/dracut.conf.d/99-tuxedo-optimize.conf
 COPY build_tuxedo.sh /tmp/build_tuxedo.sh
+COPY --from=openrgb-builder /out/openrgb.rpm /tmp/openrgb.rpm
 
 # Make script executable and run all installations in one layer
 RUN chmod +x /tmp/build_tuxedo.sh && \
@@ -29,7 +43,7 @@ RUN chmod +x /tmp/build_tuxedo.sh && \
     /tmp/build_tuxedo.sh && \
     ostree container commit
 
-### 4. LINTING
+### 5. LINTING
 RUN bootc container lint
 
 ## NOTES:

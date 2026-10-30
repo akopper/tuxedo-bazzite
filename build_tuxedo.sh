@@ -349,6 +349,22 @@ echo 'export PATH="$PATH:/usr/local/bin"' >> /etc/skel/.bashrc
 rm -f /tmp/tuxedo-control-center.rpm
 
 # ============================================================
+# OpenRGB (patched for the 048d:6004 per-key RGB keyboard)
+# ============================================================
+# Built in the Containerfile's openrgb-builder stage from the Fedora source
+# package, plus one extra HID detector (openrgb-tuxedo-6004.patch): upstream
+# only matches PID 0x600B while the Stellaris/Polaris Gen4 keyboard is
+# 048d:6004 - same ITE 8291 protocol, same HID usage page. Installing the
+# RPM as a layered package pulls the Qt5 runtime, desktop file and icons;
+# the udev rules already ship with the base image (openrgb-udev-rules).
+if [ ! -f /tmp/openrgb.rpm ]; then
+    echo "ERROR: patched openrgb RPM missing - was the openrgb-builder stage skipped?"
+    exit 1
+fi
+rpm-ostree install /tmp/openrgb.rpm
+rm -f /tmp/openrgb.rpm
+
+# ============================================================
 # Sunshine (game streaming host)
 # ============================================================
 # Installed as an RPM rather than the flatpak, on purpose:
