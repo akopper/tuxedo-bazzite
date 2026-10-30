@@ -59,6 +59,18 @@ if [ -f /etc/xdg/autostart/tuxedo-control-center-tray.desktop ]; then
     done
 fi
 
+# TCC 3.1.x ships its launcher system-wide as com.tuxedocomputers.tcc.desktop.
+# Older images also dropped a user-local tuxedo-control-center.desktop whose
+# Exec points at the retired /var/lib payload. Both entries show up in the app
+# menu, and the user-local one launches nothing, so remove the stale duplicate.
+if [ -f /usr/share/applications/com.tuxedocomputers.tcc.desktop ]; then
+    for f in /home/*/.local/share/applications/tuxedo-control-center.desktop; do
+        [ -f "$f" ] || continue
+        rm -f "$f"
+        echo "Removed stale user launcher $f"
+    done
+fi
+
 # ============================================================
 # Remove stale tuxedo-modules.service from older images.
 # In ostree, /etc and /usr/local are persistent across rebases,
