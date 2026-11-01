@@ -1,7 +1,6 @@
-diff --git a/Controllers/ClevoKeyboardController/ClevoKeyboardControllerDetect.cpp b/Controllers/ClevoKeyboardController/ClevoKeyboardControllerDetect.cpp
-index 4e7cd15..4c0bfed 100644
---- a/Controllers/ClevoKeyboardController/ClevoKeyboardControllerDetect.cpp
-+++ b/Controllers/ClevoKeyboardController/ClevoKeyboardControllerDetect.cpp
+diff -Naur orig/Controllers/ClevoKeyboardController/ClevoKeyboardControllerDetect.cpp new/Controllers/ClevoKeyboardController/ClevoKeyboardControllerDetect.cpp
+--- a/Controllers/ClevoKeyboardController/ClevoKeyboardControllerDetect.cpp	2026-11-01 21:03:11.609303329 +0100
++++ b/Controllers/ClevoKeyboardController/ClevoKeyboardControllerDetect.cpp	2026-11-01 21:17:42.606028514 +0100
 @@ -28,6 +28,7 @@
  \*---------------------------------------------------------*/
  #define CLEVO_KEYBOARD_PID_8291                 0x600B
@@ -10,25 +9,23 @@ index 4e7cd15..4c0bfed 100644
  
  static DetectedControllers DetectClevoKeyboard(hid_device_info* info, clevo_keyboard_type kb_type)
  {
-@@ -59,3 +60,4 @@ DetectedControllers DetectClevoKeyboard829x(hid_device_info* info, const std::st
+@@ -59,3 +60,4 @@
  
  REGISTER_HID_DETECTOR_PU("Clevo Keyboard (ITE 8291)", DetectClevoKeyboard8291, ITE_VID, CLEVO_KEYBOARD_PID_8291, 0xFF03, 0x01);
  REGISTER_HID_DETECTOR_PU("Clevo Keyboard (ITE 829x)", DetectClevoKeyboard829x, ITE_VID, CLEVO_KEYBOARD_PID_829X, 0xFF89, 0xCC);
 +REGISTER_HID_DETECTOR_PU("Clevo Keyboard (ITE 8291, 0x6004)", DetectClevoKeyboard8291, ITE_VID, CLEVO_KEYBOARD_PID_6004, 0xFF03, 0x01);
-diff --git a/Controllers/ClevoKeyboardController/ClevoKeyboardDevices.cpp b/Controllers/ClevoKeyboardController/ClevoKeyboardDevices.cpp
-index 6d1424e..d38d852 100644
---- a/Controllers/ClevoKeyboardController/ClevoKeyboardDevices.cpp
-+++ b/Controllers/ClevoKeyboardController/ClevoKeyboardDevices.cpp
-@@ -210,6 +210,27 @@ const std::vector<clevo_led_override> clevo_ite8291_alternate_led_map =
-     { KEY_EN_ISO_BACK_SLASH,    23  },
+diff -Naur orig/Controllers/ClevoKeyboardController/ClevoKeyboardDevices.cpp new/Controllers/ClevoKeyboardController/ClevoKeyboardDevices.cpp
+--- a/Controllers/ClevoKeyboardController/ClevoKeyboardDevices.cpp	2026-11-01 21:03:12.124403090 +0100
++++ b/Controllers/ClevoKeyboardController/ClevoKeyboardDevices.cpp	2026-11-01 21:17:42.606309847 +0100
+@@ -211,6 +211,27 @@
  };
  
-+/*---------------------------------------------------------*| TUXEDO Stellaris/Polaris AMD Gen4 (DMI SKU STEPOL1XA04)   |
-+|   Measured on the hardware: only these keys are wired    |
-+|   differently from clevo_tkl_values. Wide keys (Shift,   |
-+|   Enter, Caps Lock) drive more than one LED; the first    |
-+|   one is used here. Keys without a dedicated LED (Insert, |
-+|   Home, Page Up) are parked on unused indices.            |
+ /*---------------------------------------------------------*\
++| TUXEDO Stellaris/Polaris AMD Gen4 (DMI SKU STEPOL1XA04)   |
++|   Measured on the hardware: only these keys are wired     |
++|   differently from clevo_tkl_values. Keys without a       |
++|   dedicated LED (Insert, Home, Page Up) are parked on     |
++|   unused indices.                                         |
 +\*---------------------------------------------------------*/
 +const std::vector<clevo_led_override> clevo_stepol1xa04_led_map =
 +{
@@ -44,31 +41,22 @@ index 6d1424e..d38d852 100644
 +    { KEY_EN_PAGE_UP,          125 },
 +};
 +
- /*---------------------------------------------------------*\
++/*---------------------------------------------------------*\
  | TUXEDO Stellaris 16 Gen7 AMD (STELLARIS16A07)             |
  | ITE 8291 (USB 048d:600b), 102 physical ISO keys.          |
-diff --git a/Controllers/ClevoKeyboardController/ClevoKeyboardDevices.h b/Controllers/ClevoKeyboardController/ClevoKeyboardDevices.h
-index 99a831b..5df8273 100644
---- a/Controllers/ClevoKeyboardController/ClevoKeyboardDevices.h
-+++ b/Controllers/ClevoKeyboardController/ClevoKeyboardDevices.h
-@@ -41,3 +41,4 @@ typedef struct
+ | Coordinates are visual; values are hardware LED IDs.      |
+diff -Naur orig/Controllers/ClevoKeyboardController/ClevoKeyboardDevices.h new/Controllers/ClevoKeyboardController/ClevoKeyboardDevices.h
+--- a/Controllers/ClevoKeyboardController/ClevoKeyboardDevices.h	2026-11-01 21:03:12.633472838 +0100
++++ b/Controllers/ClevoKeyboardController/ClevoKeyboardDevices.h	2026-11-01 21:17:42.606118104 +0100
+@@ -41,3 +41,4 @@
  } clevo_led_override;
  
  extern const std::vector<clevo_led_override> clevo_ite8291_alternate_led_map;
 +extern const std::vector<clevo_led_override> clevo_stepol1xa04_led_map;
-diff --git a/Controllers/ClevoKeyboardController/RGBController_ClevoKeyboard.cpp b/Controllers/ClevoKeyboardController/RGBController_ClevoKeyboard.cpp
-index c1ff442..abe8193 100644
---- a/Controllers/ClevoKeyboardController/RGBController_ClevoKeyboard.cpp
-+++ b/Controllers/ClevoKeyboardController/RGBController_ClevoKeyboard.cpp
-@@ -13,6 +13,7 @@
- 
- #include <vector>
- #include "RGBController_ClevoKeyboard.h"
-+#include <cstdio>
- #include "KeyboardLayoutManager.h"
- #include "dmiinfo.h"
- 
-@@ -382,10 +383,13 @@ void RGBController_ClevoKeyboard::SetupZones()
+diff -Naur orig/Controllers/ClevoKeyboardController/RGBController_ClevoKeyboard.cpp new/Controllers/ClevoKeyboardController/RGBController_ClevoKeyboard.cpp
+--- a/Controllers/ClevoKeyboardController/RGBController_ClevoKeyboard.cpp	2026-11-01 21:03:13.146583882 +0100
++++ b/Controllers/ClevoKeyboardController/RGBController_ClevoKeyboard.cpp	2026-11-01 21:17:42.606771243 +0100
+@@ -382,10 +382,13 @@
      /* Only the measured TUXEDO Stellaris 16 Gen7 AMD layout uses this map.
         Keep all other ITE/Clevo models on their original layout. */
      bool is_stellaris16a07 = false;
@@ -77,18 +65,40 @@ index c1ff442..abe8193 100644
      {
          DMIInfo dmi;
 -        is_stellaris16a07 = (dmi.getProductSKU() == "STELLARIS16A07");
-+        std::string sku = dmi.getProductSKU();
++        std::string sku   = dmi.getProductSKU();
 +        is_stellaris16a07 = (sku == "STELLARIS16A07");
 +        is_stepol1xa04    = (sku == "STEPOL1XA04");
      }
  
  
-@@ -428,6 +432,24 @@ void RGBController_ClevoKeyboard::SetupZones()
+@@ -400,6 +403,21 @@
+     new_kb.ChangeKeys(layout);
+ 
+     /*---------------------------------------------------------*\
++    | Keys the generic Clevo layout drops but that exist here   |
++    | on this model: Pause/Break and the context menu key       |
++    \*---------------------------------------------------------*/
++    if(is_stepol1xa04)
++    {
++        key_set extra_keys =
++        {
++            { 0, 0, 15, 118, KEY_EN_PAUSE_BREAK, KEY_EN_UNUSED, KEYBOARD_OPCODE_INSERT_SHIFT_RIGHT },
++            { 0, 5, 12,  11, KEY_EN_MENU,        KEY_EN_UNUSED, KEYBOARD_OPCODE_INSERT_SHIFT_RIGHT },
++        };
++
++        new_kb.ChangeKeys(extra_keys);
++    }
++
++    /*---------------------------------------------------------*\
+     | Create keyboard zone from KLM                             |
+     \*---------------------------------------------------------*/
+     zone keyboard_zone;
+@@ -428,6 +446,24 @@
          default_led_values.push_back(new_led.value);
      }
  
 +    /*---------------------------------------------------------*\
-+    | Apply the measured LED map of this specific model         |
++    | Apply the LED map measured on this specific model         |
 +    \*---------------------------------------------------------*/
 +    if(is_stepol1xa04)
 +    {
@@ -98,8 +108,8 @@ index c1ff442..abe8193 100644
 +            {
 +                if(leds[led_idx].name == entry.name)
 +                {
-+                    leds[led_idx].value          = entry.value;
-+                    default_led_values[led_idx]  = entry.value;
++                    leds[led_idx].value         = entry.value;
++                    default_led_values[led_idx] = entry.value;
 +                }
 +            }
 +        }
@@ -108,3 +118,45 @@ index c1ff442..abe8193 100644
      SetupColors();
  
      BuildBufferMap();
+@@ -456,6 +492,41 @@
+             buffer_map[leds[led_idx].value] = &colors[led_idx];
+         }
+     }
++
++    /*---------------------------------------------------------*\
++    | On the Stellaris/Polaris Gen4 the wide keys are lit by    |
++    | two LEDs in different matrix rows: left Shift (21|22),    |
++    | Caps Lock (42|43) and Enter (56|77). The layout provides  |
++    | one LED per key, so mirror the key colour onto the        |
++    | second LED to light the whole key.                        |
++    \*---------------------------------------------------------*/
++    DMIInfo dmi;
++
++    if(dmi.getProductSKU() == "STEPOL1XA04")
++    {
++        for(size_t led_idx = 0; led_idx < leds.size(); led_idx++)
++        {
++            unsigned int second_led = 0;
++
++            if(leds[led_idx].name == KEY_EN_LEFT_SHIFT)
++            {
++                second_led = 22;
++            }
++            else if(leds[led_idx].name == KEY_EN_CAPS_LOCK)
++            {
++                second_led = 43;
++            }
++            else if(leds[led_idx].name == KEY_EN_ANSI_ENTER)
++            {
++                second_led = 77;
++            }
++
++            if(second_led != 0 && second_led < buffer_map.size())
++            {
++                buffer_map[second_led] = &colors[led_idx];
++            }
++        }
++    }
+ }
+ 
+ void RGBController_ClevoKeyboard::DeviceUpdateLEDs()
