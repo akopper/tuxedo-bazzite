@@ -1,23 +1,110 @@
-Upstream OpenRGB (>= 1.0rc2, MR !3167) ships a ClevoKeyboardController for
-the ITE 8291 per-key RGB keyboard, but its detector only registers USB PID
-0x600B. The TUXEDO Stellaris/Polaris Gen4 keyboard enumerates as 048d:6004
-and uses the same ITE 8291 protocol (tuxedo-drivers handles PID 6004, 600A,
-600B and CE00 with the same code); the HID report descriptor of the vendor
-interface is identical (usage page 0xFF03, usage 0x01), which is what
-OpenRGB matches on. Register the extra PID so the keyboard is detected.
-
+diff --git a/Controllers/ClevoKeyboardController/ClevoKeyboardControllerDetect.cpp b/Controllers/ClevoKeyboardController/ClevoKeyboardControllerDetect.cpp
+index 4e7cd15..4c0bfed 100644
 --- a/Controllers/ClevoKeyboardController/ClevoKeyboardControllerDetect.cpp
 +++ b/Controllers/ClevoKeyboardController/ClevoKeyboardControllerDetect.cpp
-@@ -25,6 +25,7 @@
- | These are ITE 8291 per-key RGB keyboard controllers   |
- \*-----------------------------------------------------*/
- #define CLEVO_KEYBOARD_PID_600B        0x600B
-+#define CLEVO_KEYBOARD_PID_6004        0x6004
+@@ -28,6 +28,7 @@
+ \*---------------------------------------------------------*/
+ #define CLEVO_KEYBOARD_PID_8291                 0x600B
+ #define CLEVO_KEYBOARD_PID_829X                 0x8910
++#define CLEVO_KEYBOARD_PID_6004                 0x6004
  
- void DetectClevoKeyboardControllers(hid_device_info* info, const std::string& name)
+ static DetectedControllers DetectClevoKeyboard(hid_device_info* info, clevo_keyboard_type kb_type)
  {
-@@ -41,3 +42,4 @@
- }
+@@ -59,3 +60,4 @@ DetectedControllers DetectClevoKeyboard829x(hid_device_info* info, const std::st
  
- REGISTER_HID_DETECTOR_PU("Clevo Keyboard", DetectClevoKeyboardControllers, 0x048D, 0x600B, 0xFF03, 0x01);
-+REGISTER_HID_DETECTOR_PU("Clevo Keyboard", DetectClevoKeyboardControllers, 0x048D, 0x6004, 0xFF03, 0x01);
+ REGISTER_HID_DETECTOR_PU("Clevo Keyboard (ITE 8291)", DetectClevoKeyboard8291, ITE_VID, CLEVO_KEYBOARD_PID_8291, 0xFF03, 0x01);
+ REGISTER_HID_DETECTOR_PU("Clevo Keyboard (ITE 829x)", DetectClevoKeyboard829x, ITE_VID, CLEVO_KEYBOARD_PID_829X, 0xFF89, 0xCC);
++REGISTER_HID_DETECTOR_PU("Clevo Keyboard (ITE 8291, 0x6004)", DetectClevoKeyboard8291, ITE_VID, CLEVO_KEYBOARD_PID_6004, 0xFF03, 0x01);
+diff --git a/Controllers/ClevoKeyboardController/ClevoKeyboardDevices.cpp b/Controllers/ClevoKeyboardController/ClevoKeyboardDevices.cpp
+index 6d1424e..d38d852 100644
+--- a/Controllers/ClevoKeyboardController/ClevoKeyboardDevices.cpp
++++ b/Controllers/ClevoKeyboardController/ClevoKeyboardDevices.cpp
+@@ -210,6 +210,27 @@ const std::vector<clevo_led_override> clevo_ite8291_alternate_led_map =
+     { KEY_EN_ISO_BACK_SLASH,    23  },
+ };
+ 
++/*---------------------------------------------------------*| TUXEDO Stellaris/Polaris AMD Gen4 (DMI SKU STEPOL1XA04)   |
++|   Measured on the hardware: only these keys are wired    |
++|   differently from clevo_tkl_values. Wide keys (Shift,   |
++|   Enter, Caps Lock) drive more than one LED; the first    |
++|   one is used here. Keys without a dedicated LED (Insert, |
++|   Home, Page Up) are parked on unused indices.            |
++\*---------------------------------------------------------*/
++const std::vector<clevo_led_override> clevo_stepol1xa04_led_map =
++{
++    { KEY_EN_RIGHT_SHIFT,      34  },
++    { KEY_EN_UP_ARROW,         35  },
++    { KEY_EN_DOWN_ARROW,       14  },
++    { KEY_EN_ISO_BACK_SLASH,   23  },
++    { KEY_EN_NUMPAD_PLUS,      122 },
++    { KEY_EN_NUMPAD_MINUS,     121 },
++    { KEY_EN_PRINT_SCREEN,     119 },
++    { KEY_EN_INSERT,           123 },
++    { KEY_EN_HOME,             124 },
++    { KEY_EN_PAGE_UP,          125 },
++};
++
+ /*---------------------------------------------------------*\
+ | TUXEDO Stellaris 16 Gen7 AMD (STELLARIS16A07)             |
+ | ITE 8291 (USB 048d:600b), 102 physical ISO keys.          |
+diff --git a/Controllers/ClevoKeyboardController/ClevoKeyboardDevices.h b/Controllers/ClevoKeyboardController/ClevoKeyboardDevices.h
+index 99a831b..5df8273 100644
+--- a/Controllers/ClevoKeyboardController/ClevoKeyboardDevices.h
++++ b/Controllers/ClevoKeyboardController/ClevoKeyboardDevices.h
+@@ -41,3 +41,4 @@ typedef struct
+ } clevo_led_override;
+ 
+ extern const std::vector<clevo_led_override> clevo_ite8291_alternate_led_map;
++extern const std::vector<clevo_led_override> clevo_stepol1xa04_led_map;
+diff --git a/Controllers/ClevoKeyboardController/RGBController_ClevoKeyboard.cpp b/Controllers/ClevoKeyboardController/RGBController_ClevoKeyboard.cpp
+index c1ff442..abe8193 100644
+--- a/Controllers/ClevoKeyboardController/RGBController_ClevoKeyboard.cpp
++++ b/Controllers/ClevoKeyboardController/RGBController_ClevoKeyboard.cpp
+@@ -13,6 +13,7 @@
+ 
+ #include <vector>
+ #include "RGBController_ClevoKeyboard.h"
++#include <cstdio>
+ #include "KeyboardLayoutManager.h"
+ #include "dmiinfo.h"
+ 
+@@ -382,10 +383,13 @@ void RGBController_ClevoKeyboard::SetupZones()
+     /* Only the measured TUXEDO Stellaris 16 Gen7 AMD layout uses this map.
+        Keep all other ITE/Clevo models on their original layout. */
+     bool is_stellaris16a07 = false;
++    bool is_stepol1xa04     = false;
+     if(!is_829x)
+     {
+         DMIInfo dmi;
+-        is_stellaris16a07 = (dmi.getProductSKU() == "STELLARIS16A07");
++        std::string sku = dmi.getProductSKU();
++        is_stellaris16a07 = (sku == "STELLARIS16A07");
++        is_stepol1xa04    = (sku == "STEPOL1XA04");
+     }
+ 
+ 
+@@ -428,6 +432,24 @@ void RGBController_ClevoKeyboard::SetupZones()
+         default_led_values.push_back(new_led.value);
+     }
+ 
++    /*---------------------------------------------------------*\
++    | Apply the measured LED map of this specific model         |
++    \*---------------------------------------------------------*/
++    if(is_stepol1xa04)
++    {
++        for(std::size_t led_idx = 0; led_idx < leds.size(); led_idx++)
++        {
++            for(const clevo_led_override& entry : clevo_stepol1xa04_led_map)
++            {
++                if(leds[led_idx].name == entry.name)
++                {
++                    leds[led_idx].value          = entry.value;
++                    default_led_values[led_idx]  = entry.value;
++                }
++            }
++        }
++    }
++
+     SetupColors();
+ 
+     BuildBufferMap();

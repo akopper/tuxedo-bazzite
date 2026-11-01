@@ -21,7 +21,7 @@ All images are published to `ghcr.io/akopper/`:
 
 - **[Tuxedo Drivers](https://gitlab.com/tuxedocomputers/development/packages/tuxedo-drivers)** — kernel modules built via `akmod-tuxedo-drivers` from the Tuxedo RPM repo, signed for Secure Boot
 - **[Tuxedo Control Center](https://github.com/tuxedocomputers/tuxedo-control-center)** — GUI and `tccd` service for fan/LED/power profiles
-- **[OpenRGB](https://openrgb.org/)** — built from the Fedora package with one extra HID detector: upstream only recognises the Clevo/TUXEDO per-key RGB keyboard as `048d:600b`, while the Stellaris/Polaris Gen4 enumerates as `048d:6004` (same ITE 8291 protocol). With the patch the keyboard appears in OpenRGB for per-key colours, effects and profiles
+- **[OpenRGB](https://openrgb.org/)** — built from a pinned upstream commit (newer than the Fedora package, which misassigns almost every key on this keyboard) plus two patches: an extra HID detector for `048d:6004` (upstream only knows `048d:600b`, the Stellaris/Polaris Gen4 uses the same ITE 8291 protocol) and the measured per-key LED map of the Stellaris/Polaris Gen4 (`STEPOL1XA04`), which fixes right Shift, the arrow keys, the ISO `<` key, numpad `+`/`-` and Print Screen. Per-key colours, effects and profiles work
 - **[yt6801 Ethernet Driver](https://github.com/h4rm00n/yt6801-linux-driver)** — for Motorcomm NICs (signed for Secure Boot)
 - **[niri](https://github.com/niri-wm/niri)** — scrollable-tiling Wayland compositor (niri variants only)
 - **[Noctalia](https://noctalia.dev/)** — native C++/OpenGL ES shell for niri (niri variants only)
