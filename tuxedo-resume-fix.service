@@ -1,0 +1,9 @@
+[Unit]
+Description=Post-resume fixups (Wi-Fi, keyboard backlight, OpenRGB)
+Documentation=https://github.com/akopper/tuxedo-bazzite
+After=suspend.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/tuxedo-resume-fix
+TimeoutStartSec=120

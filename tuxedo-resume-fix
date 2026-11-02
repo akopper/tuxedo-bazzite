@@ -1,0 +1,62 @@
+#!/bin/bash
+# Post-resume fixups for the TUXEDO Stellaris/Polaris Gen4.
+#
+# Started with "systemctl --no-block start" from a systemd-sleep hook so
+# that the actual resume is not delayed by any of the waiting below.
+
+log() { logger -t tuxedo-resume "$*"; }
+
+sleep 2
+
+# --- Wi-Fi -------------------------------------------------------------
+# The AX210 sometimes comes back from s2idle with a dead firmware (AER
+# fatal on its root port, "Failed to start RT ucode: -110").  Only a PCI
+# re-probe brings it back.
+wifi_up() {
+    [ -e /sys/class/net/wlp4s0 ] && timeout 3 ip link set wlp4s0 up 2>/dev/null
+}
+
+wifi_blocked() {
+    for rfkill in /sys/class/rfkill/*; do
+        [ "$(cat "$rfkill/type" 2>/dev/null)" = "wlan" ] || continue
+        [ "$(cat "$rfkill/soft" 2>/dev/null)" = "1" ] && return 0
+    done
+    return 1
+}
+
+if ! wifi_blocked && ! wifi_up; then
+    sleep 1
+    if ! wifi_up; then
+        log "Wi-Fi did not come back, re-probing 0000:04:00.0"
+        timeout 10 modprobe -r iwlmvm iwlwifi 2>/dev/null
+        if [ -e /sys/bus/pci/devices/0000:04:00.0 ]; then
+            echo 1 > /sys/bus/pci/devices/0000:04:00.0/remove 2>/dev/null
+            sleep 1
+        fi
+        echo 1 > /sys/bus/pci/rescan
+        modprobe iwlwifi
+    fi
+fi
+
+# --- Keyboard ----------------------------------------------------------
+# The ITE 8291 LED controller does not survive s2idle: afterwards it only
+# lights a handful of keys and ignores every frame until the USB device is
+# power cycled.
+for d in /sys/bus/usb/devices/*/; do
+    [ "$(cat "$d/idVendor" 2>/dev/null)" = "048d" ] || continue
+    [ "$(cat "$d/idProduct" 2>/dev/null)" = "6004" ] || continue
+    log "power cycling the keyboard ($d)"
+    echo 0 > "$d/authorized"
+    sleep 1
+    echo 1 > "$d/authorized"
+    break
+done
+
+sleep 2
+
+# --- OpenRGB -----------------------------------------------------------
+for uid in $(loginctl list-users --no-legend 2>/dev/null | awk '{print $1}'); do
+    user=$(id -nu "$uid" 2>/dev/null) || continue
+    runuser -u "$user" -- env XDG_RUNTIME_DIR="/run/user/$uid" \
+        systemctl --user try-restart openrgb.service >/dev/null 2>&1
+done

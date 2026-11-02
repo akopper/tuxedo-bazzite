@@ -1,0 +1,6 @@
+#!/bin/bash
+# Keep this hook short: resume waits for it, so only trigger the work.
+
+[ "$1" = "post" ] || exit 0
+
+systemctl --no-block start tuxedo-resume-fix.service
