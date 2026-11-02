@@ -30,6 +30,8 @@ COPY tuxedo.repo /etc/yum.repos.d/tuxedo.repo
 COPY fixtuxedo /usr/bin/fixtuxedo
 COPY fixtuxedo.service /etc/systemd/system/fixtuxedo.service
 COPY tuxedo-wifi-resume /usr/lib/systemd/system-sleep/50-tuxedo-wifi-reset.sh
+COPY openrgb.service /usr/lib/systemd/user/openrgb.service
+COPY tuxedo-openrgb-restart /usr/lib/systemd/system-sleep/40-tuxedo-openrgb-restart.sh
 COPY build_tuxedo.sh /tmp/build_tuxedo.sh
 COPY --from=openrgb-builder /out/openrgb.rpm /tmp/openrgb.rpm
 
@@ -41,6 +43,11 @@ RUN chmod +x /tmp/build_tuxedo.sh && \
     AKMODS_PRIVATE_KEY_B64="${AKMODS_PRIVATE_KEY_B64}" \
     AKMODS_PUBLIC_KEY_B64="${AKMODS_PUBLIC_KEY_B64}" \
     /tmp/build_tuxedo.sh && \
+    ostree container commit
+
+### 4b. OPENRGB USER SERVICE
+# The unit restarts OpenRGB after resume (see the sleep hook above).
+RUN systemctl --global enable openrgb.service && \
     ostree container commit
 
 ### 5. NIRI + NOCTALIA MODIFICATIONS

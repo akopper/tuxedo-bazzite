@@ -1,0 +1,14 @@
+[Unit]
+Description=OpenRGB keyboard lighting
+Documentation=https://openrgb.org
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/openrgb --startminimized
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=graphical-session.target
