@@ -29,6 +29,7 @@ ARG AKMODS_PUBLIC_KEY_B64
 COPY tuxedo.repo /etc/yum.repos.d/tuxedo.repo
 COPY fixtuxedo /usr/bin/fixtuxedo
 COPY fixtuxedo.service /etc/systemd/system/fixtuxedo.service
+COPY tuxedo-wifi-resume /usr/lib/systemd/system-sleep/50-tuxedo-wifi-reset.sh
 COPY build_tuxedo.sh /tmp/build_tuxedo.sh
 COPY --from=openrgb-builder /out/openrgb.rpm /tmp/openrgb.rpm
 
