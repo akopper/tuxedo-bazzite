@@ -45,7 +45,7 @@ sed -i 's|^Source: .*|&\nPatch0:         openrgb-tuxedo-6004.patch|' ./*.spec
 # source tree anymore (the Fedora spec expects the installed file), and the
 # base image already ships openrgb-udev-rules. Leaving the subpackage in would
 # fail at %files and would also pin the main package to a rules version that
-# rpm-ostree may refuse to layer.
+# dnf may refuse to layer.
 python3 - ./*.spec <<'PYEOF'
 import re, sys
 

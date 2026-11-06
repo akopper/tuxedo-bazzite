@@ -39,8 +39,7 @@ RUN chmod +x /tmp/build_tuxedo.sh && \
     sed -i "s/FEDORA_VERSION_PLACEHOLDER/${RELEASE}/g" /etc/yum.repos.d/tuxedo.repo && \
     AKMODS_PRIVATE_KEY_B64="${AKMODS_PRIVATE_KEY_B64}" \
     AKMODS_PUBLIC_KEY_B64="${AKMODS_PUBLIC_KEY_B64}" \
-    /tmp/build_tuxedo.sh && \
-    ostree container commit
+    /tmp/build_tuxedo.sh
 
 ### 5. NIRI + NOCTALIA MODIFICATIONS
 COPY niri/build_niri.sh /tmp/build_niri.sh
@@ -49,12 +48,11 @@ COPY niri/setup-noctalia /tmp/setup-noctalia
 COPY niri/noctalia.just /tmp/noctalia.just
 
 RUN chmod +x /tmp/build_niri.sh && \
-    /tmp/build_niri.sh && \
-    ostree container commit
+    /tmp/build_niri.sh
 
 ### 6. LINTING
 RUN bootc container lint
 
 ## NOTES:
 # - /var/lib/alternatives is required to prevent failure with some RPM installs
-# - All RUN commands must end with ostree container commit
+# - F45 base images are bootc, not ostree containers: do not call ostree container commit

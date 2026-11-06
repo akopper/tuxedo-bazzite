@@ -15,7 +15,7 @@ TUXEDO_DRIVERS_VERSION="4.25.0-1.fc43"   # must be >= 4.24 for the 7.x kernels (
 # dbus/udev shipped directly, desktop file renamed), which is exactly why the
 # TCC section installs the RPM instead of copying dist-data files. Do not go
 # back below 3.1.0 without reworking that section again.
-TCC_VERSION="3.1.2"
+TCC_VERSION="3.1.3"
 YT6801_COMMIT="36bfc255f1ad7fc1796652612a4f10e7487d4c82"
 DICTUX_COMMIT="99a49cbc2a3886c8eba6106d9c5ed29adf4c0ae5"
 CPTR_VERSION="0.9.21"
@@ -25,7 +25,8 @@ CPTR_VERSION="0.9.21"
 # ============================================================
 # tmux and gnome-disk-utility are commonly useful on laptops.
 # Folded in from the former build-base.sh to reduce script count.
-rpm-ostree install tmux gnome-disk-utility ydotool pipx elementary-files
+# elementary-files is not packaged for Fedora 45; GNOME/niri already ship nautilus.
+dnf install -y tmux gnome-disk-utility ydotool pipx python3.13
 
 # Enable podman socket for container management
 systemctl enable podman.socket
@@ -33,7 +34,7 @@ systemctl enable podman.socket
 # ============================================================
 # Install build dependencies for Tuxedo drivers
 # ============================================================
-rpm-ostree install rpm-build rpmdevtools kmodtool rpmrebuild cpio curl gcc make kernel-devel
+dnf install -y rpm-build rpmdevtools kmodtool rpmrebuild cpio curl gcc make kernel-devel
 
 # ============================================================
 # Setup fixtuxedo script and service
@@ -129,7 +130,7 @@ build_and_sign_modules() {
 # The TUXEDO repo provides a DKMS source package
 # (tuxedo-drivers-*.noarch.rpm) which installs source to
 # /usr/src/tuxedo-drivers-<version>/. There is no
-# akmod-tuxedo-drivers package in the TUXEDO repo for Fedora 44,
+# akmod-tuxedo-drivers package in the TUXEDO repo for Fedora 44/45,
 # so we build the modules manually from the DKMS source.
 # NOTE: The version must match the kernel flavor of the base image:
 # - ogc-lts (kernel 6.18, bazzite-*-nvidia): tuxedo-drivers >= 4.22 works
@@ -211,6 +212,13 @@ cd /tmp
 # not silently save a 404 page and explode later
 curl -fsSL -o /tmp/tuxedo-control-center.rpm https://rpm.tuxedocomputers.com/fedora/${RELEASE}/x86_64/base/tuxedo-control-center_${TCC_VERSION}.rpm
 
+# rpm -i bypasses dnf's repo key handling, and dnf only imports keys for
+# repos it actually uses. Import the TUXEDO key explicitly so the signature
+# check below succeeds.
+curl -fsSL -o /tmp/tuxedo.asc https://rpm.tuxedocomputers.com/fedora/${RELEASE}/0x54840598.pub.asc
+rpm --import /tmp/tuxedo.asc
+rm -f /tmp/tuxedo.asc
+
 # rpm cannot create files through the /opt -> var/opt symlink.
 # Clear any pre-existing entry first, otherwise rpm would install *through*
 # a stale symlink and the mv below would move the link instead of the payload.
@@ -224,6 +232,12 @@ rpm -i --nodeps --noscripts /tmp/tuxedo-control-center.rpm
 # Move the payload out of /var (mutable) into /usr (immutable, ostree-managed)
 mv /var/opt/tuxedo-control-center /usr/share/tuxedo-control-center
 ln -sfn /usr/share/tuxedo-control-center /var/opt/tuxedo-control-center
+
+# Describe the /var symlink for bootc: /var is not carried over verbatim, so
+# without a tmpfiles entry the compatibility link would disappear on redeploy.
+cat > /usr/lib/tmpfiles.d/tuxedo-control-center.conf << 'TCCTMP'
+L /var/opt/tuxedo-control-center - - - - /usr/share/tuxedo-control-center
+TCCTMP
 
 # The packaged units and desktop entries still point at /opt, while our
 # payload now lives in /usr/share. Rewrite those three files - and fail
@@ -274,17 +288,23 @@ systemctl enable tccd-sleep.service
 # rebases and are available to all users.
 echo "Installing pipx-managed apps..."
 
-# Ensure pipx global dirs exist
-PIPX_GLOBAL_HOME="/opt/pipx"
-PIPX_GLOBAL_BIN_DIR="/usr/local/bin"
+# Keep the venvs in /usr (immutable, part of the image) instead of /var:
+# bootc does not carry arbitrary /var content, so /opt/pipx (-> /var/opt/pipx)
+# would vanish on redeploy. The apps are version-pinned and rebuilt with the
+# image, so a read-only /usr/lib/pipx is the right place.
+PIPX_GLOBAL_HOME="/usr/lib/pipx"
+PIPX_GLOBAL_BIN_DIR="/usr/bin"
 export PIPX_GLOBAL_HOME PIPX_GLOBAL_BIN_DIR
 
+# Install with Python 3.13 on purpose: the base image has Python 3.15 and
+# PyAV has no 3.15 wheel yet, so pip would build it from source and fail
+# without the FFmpeg development headers. 3.13 has a prebuilt abi3 wheel.
 # Install dictux (voice dictation) - not on PyPI, install from GitHub.
 # Pinned to a commit: Renovate bumps DICTUX_COMMIT when master moves.
-pipx install --global "git+https://github.com/nitishkp001/dictux.git@${DICTUX_COMMIT}"
+pipx install --global --python python3.13 "git+https://github.com/nitishkp001/dictux.git@${DICTUX_COMMIT}"
 
 # Install cptr (AI assistant) - Renovate bumps CPTR_VERSION from PyPI
-pipx install --global "cptr==${CPTR_VERSION}"
+pipx install --global --python python3.13 "cptr==${CPTR_VERSION}"
 
 echo "pipx-managed apps installed."
 
@@ -318,7 +338,7 @@ Requires=ydotoold.service
 [Service]
 Type=simple
 Environment=HF_HUB_OFFLINE=1
-ExecStart=/usr/local/bin/dictux
+ExecStart=/usr/bin/dictux
 Restart=on-failure
 RestartSec=5
 
@@ -334,7 +354,7 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-ExecStart=/usr/local/bin/cptr run --headless
+ExecStart=/usr/bin/cptr run --headless
 Restart=on-failure
 RestartSec=5
 
@@ -361,7 +381,7 @@ if [ ! -f /tmp/openrgb.rpm ]; then
     echo "ERROR: patched openrgb RPM missing - was the openrgb-builder stage skipped?"
     exit 1
 fi
-rpm-ostree install /tmp/openrgb.rpm
+dnf install -y /tmp/openrgb.rpm
 rm -f /tmp/openrgb.rpm
 
 # ============================================================
@@ -396,7 +416,7 @@ curl -fsSL "https://download.copr.fedorainfracloud.org/results/lizardbyte/beta/p
 rpm --import /tmp/lizardbyte.asc
 rm -f /tmp/lizardbyte.asc
 
-rpm-ostree install Sunshine
+dnf install -y Sunshine
 
 # CAP_SYS_ADMIN is what KMS capture needs, CAP_SYS_NICE lets Sunshine raise
 # its own scheduling priority. Ostree preserves file capabilities (gamescope
@@ -429,5 +449,13 @@ ln -sf /usr/lib/systemd/user/app-dev.lizardbyte.app.Sunshine.service \
 # explicitly so "systemctl --user status sunshine" works.
 ln -sf /usr/lib/systemd/user/app-dev.lizardbyte.app.Sunshine.service \
     /etc/systemd/user/sunshine.service
+
+# Drop package-manager caches: they bloat the image and make bootc lint
+# complain about non-cache content in /var.
+dnf clean all
+rm -rf /var/cache/libdnf5 /var/cache/dnf /var/cache/ldconfig
+rm -rf /run/dnf /tmp/_kmod_build_* /tmp/yt6801-linux-driver
+rm -f /tmp/tuxedo-drivers.rpm /var/log/dnf5.log
+rm -rf /var/lib/dnf/repos /var/roothome/.cache/pip
 
 echo "Tuxedo drivers, yt6801, Control Center, dictux, cptr, and Sunshine installation completed!"

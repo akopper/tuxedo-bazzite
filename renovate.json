@@ -49,23 +49,23 @@
   "customManagers": [
     {
       "customType": "regex",
-      "description": "TUXEDO Control Center RPM. The install in build_tuxedo.sh expects the 3.1.x packaging (units in /usr/lib/systemd/system, polkit/dbus/udev shipped directly) - re-check that section before dropping below 3.1.0. NOTE: the '44' in the registryUrl must match the Fedora release of the base image (dir layout: /fedora/<release>/x86_64/base/repodata/).",
+      "description": "TUXEDO Control Center RPM. The install in build_tuxedo.sh expects the 3.1.x packaging (units in /usr/lib/systemd/system, polkit/dbus/udev shipped directly) - re-check that section before dropping below 3.1.0. NOTE: the '45' in the registryUrl must match the Fedora release of the base image (dir layout: /fedora/<release>/x86_64/base/repodata/).",
       "managerFilePatterns": ["/^build_tuxedo\\.sh$/"],
       "matchStrings": ["TCC_VERSION=\"(?<currentValue>[^\"]+)\""],
       "depNameTemplate": "tuxedo-control-center",
       "datasourceTemplate": "rpm",
-      "registryUrlTemplate": "https://rpm.tuxedocomputers.com/fedora/44/x86_64/base/repodata",
+      "registryUrlTemplate": "https://rpm.tuxedocomputers.com/fedora/45/x86_64/base/repodata",
       "versioningTemplate": "loose",
       "extractVersionTemplate": "^(?<version>[^-]+)"
     },
     {
       "customType": "regex",
-      "description": "tuxedo-drivers DKMS source RPM. The FC release suffix (e.g. -1.fc43) is part of the version on purpose. NOTE: the '44' in the registryUrl must match the Fedora release of the base image.",
+      "description": "tuxedo-drivers DKMS source RPM. The FC release suffix (e.g. -1.fc43) is part of the version on purpose. NOTE: the '45' in the registryUrl must match the Fedora release of the base image.",
       "managerFilePatterns": ["/^build_tuxedo\\.sh$/"],
       "matchStrings": ["TUXEDO_DRIVERS_VERSION=\"(?<currentValue>[^\"]+)\""],
       "depNameTemplate": "tuxedo-drivers",
       "datasourceTemplate": "rpm",
-      "registryUrlTemplate": "https://rpm.tuxedocomputers.com/fedora/44/x86_64/base/repodata",
+      "registryUrlTemplate": "https://rpm.tuxedocomputers.com/fedora/45/x86_64/base/repodata",
       "versioningTemplate": "loose"
     },
     {
