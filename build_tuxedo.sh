@@ -375,14 +375,22 @@ rm -f /tmp/tuxedo-control-center.rpm
 # package, plus one extra HID detector (openrgb-tuxedo-6004.patch): upstream
 # only matches PID 0x600B while the Stellaris/Polaris Gen4 keyboard is
 # 048d:6004 - same ITE 8291 protocol, same HID usage page. Installing the
-# RPM as a layered package pulls the Qt5 runtime, desktop file and icons;
-# the udev rules already ship with the base image (openrgb-udev-rules).
+# RPM pulls the Qt5 runtime, desktop file and icons. The base image ships
+# openrgb-udev-rules, but that package only tags PID 0x600b, so the Gen4
+# keyboard stays root-only and the user service cannot open it.
 if [ ! -f /tmp/openrgb.rpm ]; then
     echo "ERROR: patched openrgb RPM missing - was the openrgb-builder stage skipped?"
     exit 1
 fi
 dnf install -y /tmp/openrgb.rpm
 rm -f /tmp/openrgb.rpm
+
+# Without this rule /dev/hidraw0 for 048d:6004 is crw------- root:root:
+# TAG+="uaccess" gives the logged-in seat user an ACL, which is what lets
+# the per-user openrgb.service talk to the keyboard.
+cat > /usr/lib/udev/rules.d/60-openrgb-tuxedo-6004.rules << 'ORGB6004'
+SUBSYSTEMS=="usb|hidraw", ATTRS{idVendor}=="048d", ATTRS{idProduct}=="6004", TAG+="uaccess", TAG+="Clevo_Keyboard"
+ORGB6004
 
 # ============================================================
 # Sunshine (game streaming host)
