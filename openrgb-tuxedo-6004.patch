@@ -160,3 +160,409 @@ diff -Naur orig/Controllers/ClevoKeyboardController/RGBController_ClevoKeyboard.
  }
  
  void RGBController_ClevoKeyboard::DeviceUpdateLEDs()
+diff --git a/Controllers/TuxedoLightbarController/RGBController_TuxedoLightbar.cpp b/Controllers/TuxedoLightbarController/RGBController_TuxedoLightbar.cpp
+new file mode 100644
+index 00000000..71e8b2ae
+--- /dev/null
++++ b/Controllers/TuxedoLightbarController/RGBController_TuxedoLightbar.cpp
+@@ -0,0 +1,147 @@
++/*---------------------------------------------------------*\
++| RGBController_TuxedoLightbar.cpp                          |
++|                                                           |
++|   RGBController for the TUXEDO/Uniwill front lightbar     |
++|                                                           |
++|   OpenRGB colours are 8-bit, the EC accepts 0..max_channel |
++|   (0x24 = 36) per channel, so the colour is scaled here.  |
++|                                                           |
++|   This file is part of the OpenRGB project                |
++|   SPDX-License-Identifier: GPL-2.0-or-later               |
++\*---------------------------------------------------------*/
++
++#include "RGBController_TuxedoLightbar.h"
++
++/**------------------------------------------------------------------*\
++    @name TUXEDO Lightbar
++    @category LEDStrip
++    @type USB
++    @save :x:
++    @direct :white_check_mark:
++    @effects :white_check_mark:
++    @detectors DetectTuxedoLightbarControllers
++    @comment Front lightbar on TUXEDO/Uniwill laptops (EC, sysfs)
++\*-------------------------------------------------------------------*/
++
++RGBController_TuxedoLightbar::RGBController_TuxedoLightbar(TuxedoLightbarController* controller_ptr)
++{
++    controller  = controller_ptr;
++
++    name        = "TUXEDO Lightbar";
++    vendor      = "TUXEDO Computers";
++    type        = DEVICE_TYPE_LEDSTRIP;
++    description = "TUXEDO front lightbar (Uniwill EC)";
++    location    = controller->GetDeviceLocation();
++    serial      = controller->GetSerialString();
++    version     = controller->GetFirmwareVersion();
++
++    mode Direct;
++    Direct.name           = "Direct";
++    Direct.value          = TUXEDO_LIGHTBAR_MODE_DIRECT;
++    Direct.flags          = MODE_FLAG_HAS_PER_LED_COLOR | MODE_FLAG_HAS_BRIGHTNESS;
++    Direct.color_mode     = MODE_COLORS_PER_LED;
++    Direct.brightness_min = 0;
++    Direct.brightness_max = 100;
++    Direct.brightness     = 100;
++    modes.push_back(Direct);
++
++    mode Animation;
++    Animation.name       = "Animation";
++    Animation.value      = TUXEDO_LIGHTBAR_MODE_ANIMATION;
++    Animation.flags      = 0;
++    Animation.color_mode = MODE_COLORS_NONE;
++    modes.push_back(Animation);
++
++    mode Off;
++    Off.name       = "Off";
++    Off.value      = TUXEDO_LIGHTBAR_MODE_OFF;
++    Off.flags      = 0;
++    Off.color_mode = MODE_COLORS_NONE;
++    modes.push_back(Off);
++
++    SetupZones();
++}
++
++RGBController_TuxedoLightbar::~RGBController_TuxedoLightbar()
++{
++    Shutdown();
++
++    delete controller;
++}
++
++void RGBController_TuxedoLightbar::SetupZones()
++{
++    zone lightbar_zone;
++    lightbar_zone.name       = "Lightbar";
++    lightbar_zone.type       = ZONE_TYPE_SINGLE;
++    lightbar_zone.leds_min   = 1;
++    lightbar_zone.leds_max   = 1;
++    lightbar_zone.leds_count = 1;
++    zones.push_back(lightbar_zone);
++
++    led lightbar_led;
++    lightbar_led.name = "Lightbar";
++    leds.push_back(lightbar_led);
++
++    SetupColors();
++}
++
++void RGBController_TuxedoLightbar::DeviceUpdateLEDs()
++{
++    if(modes[active_mode].value != TUXEDO_LIGHTBAR_MODE_DIRECT)
++    {
++        return;
++    }
++
++    unsigned int max_channel = controller->GetMaxChannel();
++    unsigned int brightness  = modes[active_mode].brightness;
++
++    unsigned int red   = RGBGetRValue(colors[0]);
++    unsigned int green = RGBGetGValue(colors[0]);
++    unsigned int blue  = RGBGetBValue(colors[0]);
++
++    /*---------------------------------------------------------*\
++    | Scale 0..255 and the 0..100 brightness slider down to     |
++    | the EC range.  Round to the nearest step.                 |
++    \*---------------------------------------------------------*/
++    red   = (red   * brightness * max_channel + 12750) / 25500;
++    green = (green * brightness * max_channel + 12750) / 25500;
++    blue  = (blue  * brightness * max_channel + 12750) / 25500;
++
++    controller->SetColor(static_cast<unsigned char>(red),
++                         static_cast<unsigned char>(green),
++                         static_cast<unsigned char>(blue));
++    controller->SetAnimation(false);
++}
++
++void RGBController_TuxedoLightbar::DeviceUpdateZoneLEDs(int /*zone*/)
++{
++    DeviceUpdateLEDs();
++}
++
++void RGBController_TuxedoLightbar::DeviceUpdateSingleLED(int /*led*/)
++{
++    DeviceUpdateLEDs();
++}
++
++void RGBController_TuxedoLightbar::DeviceUpdateMode()
++{
++    switch(modes[active_mode].value)
++    {
++        case TUXEDO_LIGHTBAR_MODE_DIRECT:
++            DeviceUpdateLEDs();
++            break;
++
++        case TUXEDO_LIGHTBAR_MODE_ANIMATION:
++            controller->SetAnimation(true);
++            break;
++
++        case TUXEDO_LIGHTBAR_MODE_OFF:
++            controller->SetColor(0, 0, 0);
++            controller->SetAnimation(false);
++            break;
++
++        default:
++            break;
++    }
++}
+diff --git a/Controllers/TuxedoLightbarController/RGBController_TuxedoLightbar.h b/Controllers/TuxedoLightbarController/RGBController_TuxedoLightbar.h
+new file mode 100644
+index 00000000..da3a05c7
+--- /dev/null
++++ b/Controllers/TuxedoLightbarController/RGBController_TuxedoLightbar.h
+@@ -0,0 +1,38 @@
++/*---------------------------------------------------------*\
++| RGBController_TuxedoLightbar.h                            |
++|                                                           |
++|   RGBController for the TUXEDO/Uniwill front lightbar     |
++|                                                           |
++|   This file is part of the OpenRGB project                |
++|   SPDX-License-Identifier: GPL-2.0-or-later               |
++\*---------------------------------------------------------*/
++
++#pragma once
++
++#include "RGBController.h"
++#include "TuxedoLightbarController.h"
++
++enum
++{
++    TUXEDO_LIGHTBAR_MODE_DIRECT     = 0,
++    TUXEDO_LIGHTBAR_MODE_ANIMATION  = 1,
++    TUXEDO_LIGHTBAR_MODE_OFF        = 2
++};
++
++class RGBController_TuxedoLightbar : public RGBController
++{
++public:
++    RGBController_TuxedoLightbar(TuxedoLightbarController* controller_ptr);
++    ~RGBController_TuxedoLightbar();
++
++    void SetupZones();
++
++    void DeviceUpdateLEDs();
++    void DeviceUpdateZoneLEDs(int zone);
++    void DeviceUpdateSingleLED(int led);
++
++    void DeviceUpdateMode();
++
++private:
++    TuxedoLightbarController* controller;
++};
+diff --git a/Controllers/TuxedoLightbarController/TuxedoLightbarController.cpp b/Controllers/TuxedoLightbarController/TuxedoLightbarController.cpp
+new file mode 100644
+index 00000000..fd5f9415
+--- /dev/null
++++ b/Controllers/TuxedoLightbarController/TuxedoLightbarController.cpp
+@@ -0,0 +1,106 @@
++/*---------------------------------------------------------*\
++| TuxedoLightbarController.cpp                              |
++|                                                           |
++|   Driver for the TUXEDO/Uniwill front lightbar (EC)       |
++|                                                           |
++|   The kernel driver exposes each colour channel as its    |
++|   own LED, so setting a colour means writing three        |
++|   brightness attributes.  max_brightness is 0x24 (36).    |
++|                                                           |
++|   This file is part of the OpenRGB project                |
++|   SPDX-License-Identifier: GPL-2.0-or-later               |
++\*---------------------------------------------------------*/
++
++#include <fstream>
++#include <sys/stat.h>
++#include "TuxedoLightbarController.h"
++
++TuxedoLightbarController::TuxedoLightbarController()
++{
++    unsigned char value = 0;
++
++    if(ReadByte(TUXEDO_LIGHTBAR_MAX_PATH, &value) && value > 0)
++    {
++        max_channel = value;
++    }
++    else
++    {
++        max_channel = TUXEDO_LIGHTBAR_DEFAULT_MAX;
++    }
++}
++
++TuxedoLightbarController::~TuxedoLightbarController()
++{
++}
++
++bool TuxedoLightbarController::IsSupported()
++{
++    struct stat st;
++
++    return(stat(TUXEDO_LIGHTBAR_RED_PATH,       &st) == 0
++        && stat(TUXEDO_LIGHTBAR_GREEN_PATH,     &st) == 0
++        && stat(TUXEDO_LIGHTBAR_BLUE_PATH,      &st) == 0
++        && stat(TUXEDO_LIGHTBAR_ANIMATION_PATH, &st) == 0);
++}
++
++std::string TuxedoLightbarController::GetDeviceLocation()
++{
++    return("sysfs: /sys/class/leds/lightbar_rgb");
++}
++
++std::string TuxedoLightbarController::GetSerialString()
++{
++    return("");
++}
++
++std::string TuxedoLightbarController::GetFirmwareVersion()
++{
++    return("");
++}
++
++unsigned char TuxedoLightbarController::GetMaxChannel()
++{
++    return(max_channel);
++}
++
++void TuxedoLightbarController::SetColor(unsigned char red, unsigned char green, unsigned char blue)
++{
++    WriteByte(TUXEDO_LIGHTBAR_RED_PATH,   red);
++    WriteByte(TUXEDO_LIGHTBAR_GREEN_PATH, green);
++    WriteByte(TUXEDO_LIGHTBAR_BLUE_PATH,  blue);
++}
++
++void TuxedoLightbarController::SetAnimation(bool enabled)
++{
++    WriteByte(TUXEDO_LIGHTBAR_ANIMATION_PATH, enabled ? 1 : 0);
++}
++
++bool TuxedoLightbarController::ReadByte(const char* path, unsigned char* value)
++{
++    std::ifstream file(path);
++    int           read_value;
++
++    if(!(file >> read_value))
++    {
++        return(false);
++    }
++
++    *value = static_cast<unsigned char>(read_value);
++
++    return(true);
++}
++
++bool TuxedoLightbarController::WriteByte(const char* path, unsigned char value)
++{
++    std::ofstream file(path);
++
++    if(!file.is_open())
++    {
++        return(false);
++    }
++
++    file << static_cast<int>(value);
++    file.flush();
++
++    return(file.good());
++}
+diff --git a/Controllers/TuxedoLightbarController/TuxedoLightbarController.h b/Controllers/TuxedoLightbarController/TuxedoLightbarController.h
+new file mode 100644
+index 00000000..005af3b1
+--- /dev/null
++++ b/Controllers/TuxedoLightbarController/TuxedoLightbarController.h
+@@ -0,0 +1,52 @@
++/*---------------------------------------------------------*\
++| TuxedoLightbarController.h                                |
++|                                                           |
++|   Driver for the TUXEDO/Uniwill front lightbar (EC)       |
++|                                                           |
++|   The lightbar is not a USB HID device.  The TUXEDO       |
++|   kernel driver (tuxedo_keyboard) exposes it through      |
++|   three monochrome LEDs in sysfs, one per colour channel. |
++|                                                           |
++|   This file is part of the OpenRGB project                |
++|   SPDX-License-Identifier: GPL-2.0-or-later               |
++\*---------------------------------------------------------*/
++
++#pragma once
++
++#include <string>
++
++#define TUXEDO_LIGHTBAR_RED_PATH        "/sys/class/leds/lightbar_rgb:1:status/brightness"
++#define TUXEDO_LIGHTBAR_GREEN_PATH      "/sys/class/leds/lightbar_rgb:2:status/brightness"
++#define TUXEDO_LIGHTBAR_BLUE_PATH       "/sys/class/leds/lightbar_rgb:3:status/brightness"
++#define TUXEDO_LIGHTBAR_ANIMATION_PATH  "/sys/class/leds/lightbar_animation::status/brightness"
++#define TUXEDO_LIGHTBAR_MAX_PATH        "/sys/class/leds/lightbar_rgb:1:status/max_brightness"
++
++/*---------------------------------------------------------*\
++| Fallback when max_brightness cannot be read.  The Uniwill |
++| EC uses 0x24 (36) on the Stellaris/Polaris Gen4.          |
++\*---------------------------------------------------------*/
++#define TUXEDO_LIGHTBAR_DEFAULT_MAX     36
++
++class TuxedoLightbarController
++{
++public:
++    TuxedoLightbarController();
++    ~TuxedoLightbarController();
++
++    static bool     IsSupported();
++
++    std::string     GetDeviceLocation();
++    std::string     GetSerialString();
++    std::string     GetFirmwareVersion();
++
++    unsigned char   GetMaxChannel();
++
++    void            SetColor(unsigned char red, unsigned char green, unsigned char blue);
++    void            SetAnimation(bool enabled);
++
++private:
++    unsigned char   max_channel;
++
++    static bool     ReadByte(const char* path, unsigned char* value);
++    static bool     WriteByte(const char* path, unsigned char value);
++};
+diff --git a/Controllers/TuxedoLightbarController/TuxedoLightbarControllerDetect_Linux.cpp b/Controllers/TuxedoLightbarController/TuxedoLightbarControllerDetect_Linux.cpp
+new file mode 100644
+index 00000000..c7562435
+--- /dev/null
++++ b/Controllers/TuxedoLightbarController/TuxedoLightbarControllerDetect_Linux.cpp
+@@ -0,0 +1,33 @@
++/*---------------------------------------------------------*\
++| TuxedoLightbarControllerDetect_Linux.cpp                  |
++|                                                           |
++|   Detector for the TUXEDO/Uniwill front lightbar          |
++|                                                           |
++|   The lightbar is not enumerated over USB.  The TUXEDO    |
++|   kernel driver exposes it as three sysfs LEDs, so the    |
++|   detector only has to check that those LEDs exist.       |
++|                                                           |
++|   This file is part of the OpenRGB project                |
++|   SPDX-License-Identifier: GPL-2.0-or-later               |
++\*---------------------------------------------------------*/
++
++#include "DetectionManager.h"
++#include "RGBController_TuxedoLightbar.h"
++#include "TuxedoLightbarController.h"
++
++DetectedControllers DetectTuxedoLightbarControllers()
++{
++    DetectedControllers detected_controllers;
++
++    if(TuxedoLightbarController::IsSupported())
++    {
++        TuxedoLightbarController*     controller     = new TuxedoLightbarController();
++        RGBController_TuxedoLightbar* rgb_controller = new RGBController_TuxedoLightbar(controller);
++
++        detected_controllers.push_back(rgb_controller);
++    }
++
++    return(detected_controllers);
++}
++
++REGISTER_DETECTOR("TUXEDO Lightbar", DetectTuxedoLightbarControllers);

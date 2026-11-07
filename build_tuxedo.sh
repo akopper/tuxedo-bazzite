@@ -297,15 +297,18 @@ systemctl enable tccd.service
 systemctl enable tccd-sleep.service
 
 # ============================================================
-# OpenRGB (patched for the 048d:6004 per-key RGB keyboard)
+# OpenRGB (patched for the 048d:6004 keyboard and the front lightbar)
 # ============================================================
 # Built in the Containerfile's openrgb-builder stage from the Fedora source
-# package, plus one extra HID detector (openrgb-tuxedo-6004.patch): upstream
-# only matches PID 0x600B while the Stellaris/Polaris Gen4 keyboard is
-# 048d:6004 - same ITE 8291 protocol, same HID usage page. Installing the
-# RPM pulls the Qt5 runtime, desktop file and icons. The base image ships
-# openrgb-udev-rules, but that package only tags PID 0x600b, so the Gen4
-# keyboard stays root-only and the user service cannot open it.
+# package, plus two device additions (openrgb-tuxedo-6004.patch):
+#  - an extra HID detector for PID 0x6004 (upstream only matches 0x600B;
+#    same ITE 8291 protocol, same HID usage page)
+#  - a sysfs controller for the TUXEDO/Uniwill front lightbar. The lightbar
+#    is an EC device, not part of the ITE keyboard, and the kernel driver
+#    exposes it as three monochrome LEDs under /sys/class/leds.
+# Installing the RPM pulls the Qt5 runtime, desktop file and icons. The base
+# image ships openrgb-udev-rules, but that package only tags PID 0x600b, so
+# the Gen4 keyboard stays root-only and the user service cannot open it.
 if [ ! -f /tmp/openrgb.rpm ]; then
     echo "ERROR: patched openrgb RPM missing - was the openrgb-builder stage skipped?"
     exit 1
@@ -319,6 +322,16 @@ rm -f /tmp/openrgb.rpm
 cat > /usr/lib/udev/rules.d/60-openrgb-tuxedo-6004.rules << 'ORGB6004'
 SUBSYSTEMS=="usb|hidraw", ATTRS{idVendor}=="048d", ATTRS{idProduct}=="6004", TAG+="uaccess", TAG+="Clevo_Keyboard"
 ORGB6004
+
+# The front lightbar is not a USB device: tuxedo_keyboard exposes it as three
+# monochrome sysfs LEDs. Their brightness attributes are root-owned 0644, so
+# the per-user openrgb.service cannot write them. udev has no uaccess tagging
+# for sysfs attributes, hence the explicit chmod. The rule re-runs whenever
+# the LEDs are (re)registered, e.g. after a module reload.
+cat > /usr/lib/udev/rules.d/60-openrgb-tuxedo-lightbar.rules << 'ORGBLB'
+SUBSYSTEM=="leds", KERNEL=="lightbar_rgb:*", RUN+="/usr/bin/chmod 0666 /sys/class/leds/%k/brightness"
+SUBSYSTEM=="leds", KERNEL=="lightbar_animation::status", RUN+="/usr/bin/chmod 0666 /sys/class/leds/%k/brightness"
+ORGBLB
 
 # ============================================================
 # Sunshine (game streaming host)

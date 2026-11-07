@@ -2,7 +2,8 @@
 # Build the Fedora "openrgb" RPM from a newer upstream commit: the release
 # shipped in the base image's Fedora repos misassigns most keys of the
 # TUXEDO/Clevo per-key RGB keyboard (USB PID 0x6004). The patch adds the
-# 0x6004 detector and the measured LED map of the Stellaris/Polaris Gen4.
+# 0x6004 detector, the measured LED map of the Stellaris/Polaris Gen4 and a
+# sysfs controller for the TUXEDO/Uniwill front lightbar.
 #
 # This script runs in a throwaway builder stage (see Containerfile). Only the
 # finished RPM is copied into the final image, so neither the Qt5 toolchain

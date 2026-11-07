@@ -6,9 +6,11 @@ ARG SOURCE_TAG="stable"
 # Upstream OpenRGB knows the Clevo/TUXEDO per-key RGB keyboard (ITE 8291)
 # but only registers USB PID 0x600B. The Stellaris/Polaris Gen4 keyboards
 # enumerate as 048d:6004 on the same protocol, so the Fedora source package
-# is rebuilt here with one additional HID detector line. A separate stage
-# keeps the Qt5 toolchain and the ~250 build-dependency packages out of the
-# final image; only /out/openrgb.rpm is copied over.
+# is rebuilt here with one additional HID detector line. The same patch adds
+# a sysfs controller for the TUXEDO/Uniwill front lightbar (EC, three
+# monochrome LEDs), which is not a USB device. A separate stage keeps the
+# Qt5 toolchain and the ~250 build-dependency packages out of the final
+# image; only /out/openrgb.rpm is copied over.
 FROM ghcr.io/ublue-os/${SOURCE_IMAGE}:${SOURCE_TAG} AS openrgb-builder
 
 COPY openrgb-tuxedo-6004.patch /tmp/openrgb-tuxedo-6004.patch
