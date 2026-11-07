@@ -4,6 +4,13 @@ set -ouex pipefail
 
 RELEASE="$(rpm -E %fedora)"
 
+# Point the TUXEDO repo at this Fedora release before the first dnf call:
+# the placeholder in tuxedo.repo is not a usable URL and the repo has
+# skip_if_unavailable=False, so every dnf command fails until it is
+# substituted. (Previously the Containerfile RUN did this before invoking
+# the script.)
+sed -i "s/FEDORA_VERSION_PLACEHOLDER/${RELEASE}/g" /etc/yum.repos.d/tuxedo.repo
+
 # ============================================================
 # Pinned dependency versions
 # ============================================================
@@ -28,11 +35,6 @@ dnf install -y tmux gnome-disk-utility
 
 # Enable podman socket for container management
 systemctl enable podman.socket
-
-# Point the TUXEDO repo at this Fedora release. The placeholder in
-# tuxedo.repo keeps the file release-independent; doing the sed here
-# (instead of in the Containerfile RUN) keeps the Containerfile dumb.
-sed -i "s/FEDORA_VERSION_PLACEHOLDER/${RELEASE}/g" /etc/yum.repos.d/tuxedo.repo
 
 # ============================================================
 # Install build dependencies for Tuxedo drivers
