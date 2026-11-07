@@ -31,6 +31,23 @@ All images are published to `ghcr.io/akopper/`:
 
 ---
 
+## Known behaviour: the dGPU never sleeps while TCC is open
+
+On hybrid AMD iGPU + NVIDIA dGPU laptops the NVIDIA card idles at ~15 W instead of ~0 W as long as the Tuxedo Control Center window is open. The reason is in the GUI, not in the power profile: its dashboard worker polls `tccd` twice per second (`SetDGpuD0Metrics`, `GetSensorDataCollectionStatus`), and that path ends up calling `nvidia-smi` for the dGPU values. Every call touches the GPU, so runtime D3 never engages.
+
+- **Fix:** quit TCC (tray icon → Quit) when you don't need it. `tccd` keeps running and keeps applying the profiles — including the `power_ac`/`power_bat` profile switching — so nothing is lost. The card then suspends within ~15 s.
+- **Not the cause:** the TCC power profile itself, `nvidia-powerd`, `nvidia-persistenced`, OpenRGB, niri, or any compositor GPU probing. Stopping all of those does *not* let the dGPU sleep; closing the TCC window does (verified with `SIGSTOP`/`SIGCONT` on the GUI).
+- **Why profile switches look like the trigger:** switching a profile pauses that polling loop for ~1 s, RTD3 slips in, and the next poll wakes the card again. That one-second `D3Cold` blip is what you see in `cardwired`'s log.
+- **Do not verify with `nvidia-smi` or `nvtop`** — they wake the card themselves (and report nonsense such as 752 W while it is suspended). Watch the runtime PM node instead (adjust the PCI address for your machine):
+
+```bash
+watch -n1 cat /sys/bus/pci/devices/0000:01:00.0/power/runtime_status
+```
+
+`suspended` = powered down, `active` = awake. `/proc/driver/nvidia/gpus/*/power` additionally reports `Runtime D3 status` and whether VRAM is `Active`.
+
+---
+
 ## Installation
 
 ### 1. Rebase to the custom image
