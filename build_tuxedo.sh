@@ -17,8 +17,6 @@ TUXEDO_DRIVERS_VERSION="4.25.0-1.fc43"   # must be >= 4.24 for the 7.x kernels (
 # back below 3.1.0 without reworking that section again.
 TCC_VERSION="3.1.3"
 YT6801_COMMIT="36bfc255f1ad7fc1796652612a4f10e7487d4c82"
-DICTUX_COMMIT="99a49cbc2a3886c8eba6106d9c5ed29adf4c0ae5"
-CPTR_VERSION="0.9.21"
 
 # ============================================================
 # Base utilities
@@ -26,10 +24,15 @@ CPTR_VERSION="0.9.21"
 # tmux and gnome-disk-utility are commonly useful on laptops.
 # Folded in from the former build-base.sh to reduce script count.
 # elementary-files is not packaged for Fedora 45; GNOME/niri already ship nautilus.
-dnf install -y tmux gnome-disk-utility ydotool pipx python3.13
+dnf install -y tmux gnome-disk-utility
 
 # Enable podman socket for container management
 systemctl enable podman.socket
+
+# Point the TUXEDO repo at this Fedora release. The placeholder in
+# tuxedo.repo keeps the file release-independent; doing the sed here
+# (instead of in the Containerfile RUN) keeps the Containerfile dumb.
+sed -i "s/FEDORA_VERSION_PLACEHOLDER/${RELEASE}/g" /etc/yum.repos.d/tuxedo.repo
 
 # ============================================================
 # Install build dependencies for Tuxedo drivers
@@ -61,20 +64,21 @@ EOF
 
 # ============================================================
 # Inject persistent akmods signing key (prevents kmodgenca from
-# generating a new key)
-# The key pair must be enrolled in MOK on the target machine.
+# generating a new key). The key pair must be enrolled in MOK on
+# the target machine.
+# The key is passed as a BUILD SECRET (RUN --mount=type=secret in
+# the Containerfile, --secret=... on the CLI), never as a build
+# arg: build args are recorded in the published image's layer
+# history, which is exactly how the previous key leaked (Nov 2026).
 # ============================================================
-if [ -n "${AKMODS_PRIVATE_KEY_B64:-}" ] && [ -n "${AKMODS_PUBLIC_KEY_B64:-}" ]; then
+if [ -s /run/secrets/akmods_private_key ] && [ -s /run/secrets/akmods_public_key ]; then
     echo "Injecting persistent akmods signing key pair..."
     mkdir -p /etc/pki/akmods/private /etc/pki/akmods/certs
     getent group akmods >/dev/null 2>&1 || groupadd -r akmods
 
-    # Decode keys from base64
-    echo "${AKMODS_PRIVATE_KEY_B64}" | base64 -d > /etc/pki/akmods/private/akmods-persistent.priv
-    echo "${AKMODS_PUBLIC_KEY_B64}" | base64 -d > /etc/pki/akmods/certs/akmods-persistent.der
-
-    chmod 640 /etc/pki/akmods/private/akmods-persistent.priv
-    chown root:akmods /etc/pki/akmods/private/akmods-persistent.priv
+    install -m 640 -o root -g akmods \
+        /run/secrets/akmods_private_key /etc/pki/akmods/private/akmods-persistent.priv
+    install -m 644 /run/secrets/akmods_public_key /etc/pki/akmods/certs/akmods-persistent.der
 
     # Point symlinks to our persistent key
     ln -sfn /etc/pki/akmods/private/akmods-persistent.priv /etc/pki/akmods/private/private_key.priv
@@ -82,7 +86,7 @@ if [ -n "${AKMODS_PRIVATE_KEY_B64:-}" ] && [ -n "${AKMODS_PUBLIC_KEY_B64:-}" ]; 
 
     echo "Persistent signing key injected. kmodgenca will reuse this key."
 else
-    echo "WARNING: No persistent akmods key provided. kmodgenca will generate a new key."
+    echo "WARNING: No persistent akmods key mounted. kmodgenca will generate a new key."
     echo "Modules will NOT load under Secure Boot until the new key is enrolled in MOK."
 fi
 
@@ -142,7 +146,7 @@ build_and_sign_modules() {
 curl -fsSL -o /tmp/tuxedo-drivers.rpm https://rpm.tuxedocomputers.com/fedora/${RELEASE}/x86_64/base/tuxedo-drivers-${TUXEDO_DRIVERS_VERSION}.noarch.rpm
 mkdir -p /usr/src
 cd /
-rpm2cpio /tmp/tuxedo-drivers.rpm | cpio -idmv || true
+rpm2cpio /tmp/tuxedo-drivers.rpm | cpio -idm --quiet
 cd /tmp
 
 KERNEL_VERSION="$(rpm -q kernel --queryformat '%{VERSION}-%{RELEASE}.%{ARCH}')"
@@ -291,93 +295,6 @@ systemctl enable tccd.service
 systemctl enable tccd-sleep.service
 
 # ============================================================
-# Install pipx-managed apps (dictux, cptr)
-# ============================================================
-# These are installed system-wide via pipx --global so they survive
-# rebases and are available to all users.
-echo "Installing pipx-managed apps..."
-
-# Keep the venvs in /usr (immutable, part of the image) instead of /var:
-# bootc does not carry arbitrary /var content, so /opt/pipx (-> /var/opt/pipx)
-# would vanish on redeploy. The apps are version-pinned and rebuilt with the
-# image, so a read-only /usr/lib/pipx is the right place.
-PIPX_GLOBAL_HOME="/usr/lib/pipx"
-PIPX_GLOBAL_BIN_DIR="/usr/bin"
-export PIPX_GLOBAL_HOME PIPX_GLOBAL_BIN_DIR
-
-# Install with Python 3.13 on purpose: the base image has Python 3.15 and
-# PyAV has no 3.15 wheel yet, so pip would build it from source and fail
-# without the FFmpeg development headers. 3.13 has a prebuilt abi3 wheel.
-# Install dictux (voice dictation) - not on PyPI, install from GitHub.
-# Pinned to a commit: Renovate bumps DICTUX_COMMIT when master moves.
-pipx install --global --python python3.13 "git+https://github.com/nitishkp001/dictux.git@${DICTUX_COMMIT}"
-
-# Install cptr (AI assistant) - Renovate bumps CPTR_VERSION from PyPI
-pipx install --global --python python3.13 "cptr==${CPTR_VERSION}"
-
-echo "pipx-managed apps installed."
-
-# ============================================================
-# Install systemd user service files for dictux + ydotoold
-# ============================================================
-mkdir -p /etc/skel/.config/systemd/user
-
-cat > /etc/skel/.config/systemd/user/ydotoold.service << 'YDSRV'
-[Unit]
-Description=ydotool daemon for Wayland input injection
-After=graphical-session.target
-PartOf=graphical-session.target
-
-[Service]
-ExecStart=/usr/bin/ydotoold
-Restart=on-failure
-RestartSec=2
-
-[Install]
-WantedBy=graphical-session.target
-YDSRV
-
-cat > /etc/skel/.config/systemd/user/dictux.service << 'DXSRV'
-[Unit]
-Description=Dictux voice dictation tray app
-After=graphical-session.target
-PartOf=graphical-session.target
-Requires=ydotoold.service
-
-[Service]
-Type=simple
-Environment=HF_HUB_OFFLINE=1
-ExecStart=/usr/bin/dictux
-Restart=on-failure
-RestartSec=5
-
-[Install]
-WantedBy=graphical-session.target
-DXSRV
-
-cat > /etc/skel/.config/systemd/user/cptr.service << 'CPTSRV'
-[Unit]
-Description=cptr - Your computer, from anywhere
-After=network-online.target
-Wants=network-online.target
-
-[Service]
-Type=simple
-ExecStart=/usr/bin/cptr run --headless
-Restart=on-failure
-RestartSec=5
-
-[Install]
-WantedBy=default.target
-CPTSRV
-
-# Add PATH to skel bashrc
-echo 'export PATH="$PATH:/usr/local/bin"' >> /etc/skel/.bashrc
-
-# Clean up the downloaded RPM so it does not end up in the image layer
-rm -f /tmp/tuxedo-control-center.rpm
-
-# ============================================================
 # OpenRGB (patched for the 048d:6004 per-key RGB keyboard)
 # ============================================================
 # Built in the Containerfile's openrgb-builder stage from the Fedora source
@@ -470,9 +387,9 @@ ln -sf /usr/lib/systemd/user/app-dev.lizardbyte.app.Sunshine.service \
 # Drop package-manager caches: they bloat the image and make bootc lint
 # complain about non-cache content in /var.
 dnf clean all
+rm -f /tmp/tuxedo-control-center.rpm /tmp/tuxedo-drivers.rpm /var/log/dnf5.log
 rm -rf /var/cache/libdnf5 /var/cache/dnf /var/cache/ldconfig
 rm -rf /run/dnf /tmp/_kmod_build_* /tmp/yt6801-linux-driver
-rm -f /tmp/tuxedo-drivers.rpm /var/log/dnf5.log
 rm -rf /var/lib/dnf/repos /var/roothome/.cache/pip
 
-echo "Tuxedo drivers, yt6801, Control Center, dictux, cptr, and Sunshine installation completed!"
+echo "Tuxedo drivers, yt6801, Control Center, and Sunshine installation completed!"

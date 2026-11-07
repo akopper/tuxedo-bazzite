@@ -1,9 +1,6 @@
 ## 1. BUILD ARGS
 ARG SOURCE_IMAGE="bazzite-gnome-nvidia-open"
-ARG SOURCE_SUFFIX=""
 ARG SOURCE_TAG="stable"
-ARG AKMODS_PRIVATE_KEY_B64=""
-ARG AKMODS_PUBLIC_KEY_B64=""
 
 ### 2. BUILDER STAGE: patched OpenRGB RPM
 # Upstream OpenRGB knows the Clevo/TUXEDO per-key RGB keyboard (ITE 8291)
@@ -12,23 +9,20 @@ ARG AKMODS_PUBLIC_KEY_B64=""
 # is rebuilt here with one additional HID detector line. A separate stage
 # keeps the Qt5 toolchain and the ~250 build-dependency packages out of the
 # final image; only /out/openrgb.rpm is copied over.
-FROM ghcr.io/ublue-os/${SOURCE_IMAGE}${SOURCE_SUFFIX}:${SOURCE_TAG} AS openrgb-builder
+FROM ghcr.io/ublue-os/${SOURCE_IMAGE}:${SOURCE_TAG} AS openrgb-builder
 
 COPY openrgb-tuxedo-6004.patch /tmp/openrgb-tuxedo-6004.patch
 COPY build_openrgb.sh /tmp/build_openrgb.sh
 RUN chmod +x /tmp/build_openrgb.sh && /tmp/build_openrgb.sh
 
 ### 3. SOURCE IMAGE
-FROM ghcr.io/ublue-os/${SOURCE_IMAGE}${SOURCE_SUFFIX}:${SOURCE_TAG}
-
-# Re-declare build args after FROM (ARGs before FROM are only for FROM itself)
-ARG AKMODS_PRIVATE_KEY_B64
-ARG AKMODS_PUBLIC_KEY_B64
+FROM ghcr.io/ublue-os/${SOURCE_IMAGE}:${SOURCE_TAG}
 
 ### 4. TUXEDO MODIFICATIONS
 COPY tuxedo.repo /etc/yum.repos.d/tuxedo.repo
 COPY fixtuxedo /usr/bin/fixtuxedo
 COPY fixtuxedo.service /etc/systemd/system/fixtuxedo.service
+COPY 99-tuxedo-optimize.conf /usr/lib/dracut/dracut.conf.d/99-tuxedo-optimize.conf
 COPY openrgb.service /usr/lib/systemd/user/openrgb.service
 COPY tuxedo-resume-fix /usr/libexec/tuxedo-resume-fix
 COPY tuxedo-resume-fix.service /usr/lib/systemd/system/tuxedo-resume-fix.service
@@ -36,13 +30,18 @@ COPY tuxedo-resume-trigger /usr/lib/systemd/system-sleep/40-tuxedo-resume.sh
 COPY build_tuxedo.sh /tmp/build_tuxedo.sh
 COPY --from=openrgb-builder /out/openrgb.rpm /tmp/openrgb.rpm
 
-# Make script executable and run all installations in one layer
-RUN chmod +x /tmp/build_tuxedo.sh && \
+# The akmods signing key is mounted as a build secret (--secret=...), never
+# passed as a build arg: build args are recorded in the published image's
+# layer history, which is how the previous key leaked. CI writes the key
+# pair to temp files and passes
+#   --secret=id=akmods_private_key,src=...
+#   --secret=id=akmods_public_key,src=...
+# Without the secrets (e.g. a local test build) the build still works, the
+# modules are just unsigned.
+RUN --mount=type=secret,id=akmods_private_key \
+    --mount=type=secret,id=akmods_public_key \
+    chmod +x /tmp/build_tuxedo.sh && \
     mkdir -p /var/lib/alternatives && \
-    RELEASE="$(rpm -E %fedora)" && \
-    sed -i "s/FEDORA_VERSION_PLACEHOLDER/${RELEASE}/g" /etc/yum.repos.d/tuxedo.repo && \
-    AKMODS_PRIVATE_KEY_B64="${AKMODS_PRIVATE_KEY_B64}" \
-    AKMODS_PUBLIC_KEY_B64="${AKMODS_PUBLIC_KEY_B64}" \
     /tmp/build_tuxedo.sh
 
 ### 4b. OPENRGB USER SERVICE

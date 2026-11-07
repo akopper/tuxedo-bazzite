@@ -4,106 +4,22 @@
 # TUXEDO boot-time fixup script
 # ============================================================
 # This script runs before tccd.service at boot to:
-#   1. Create the /opt symlink for Tuxedo Control Center
-#   2. Remove stale tuxedo-modules.service and its helper script
-#      that load unsigned modules via insmod (fails under Secure
-#      Boot and rmmod's the signed modules fixtuxedo loaded).
-#   3. Unload the built-in uniwill_laptop module if it slipped
-#      past the modprobe blacklist, then load tuxedo-drivers
+#   1. Unload the built-in uniwill_laptop module if it slipped
+#      past the modprobe blacklist, then load the tuxedo-drivers
 #      modules in the correct order.
+#
+# Historical note: until Nov 2026 this script also migrated
+# leftovers from pre-TCC-3.1 images (stale /etc units, /var/lib
+# payload copies, per-user tray autostarts, tuxedo-modules.service).
+# Every deployed machine has booted a 3.1.x image since, so that
+# migration code was removed.
 # ============================================================
 
 set -e
 
-# Remove stale TCC units that older images installed into /etc. /etc survives
-# rebases and ostree keeps locally modified copies, so such a unit outlives the
-# image that wrote it: it shadows the vendor unit in /usr/lib/systemd/system
-# and keeps pointing at the old payload under /var/lib.
-for u in /etc/systemd/system/tccd.service /etc/systemd/system/tccd-sleep.service; do
-    if [ -f "$u" ]; then
-        rm -f "$u"
-        echo "Removed stale unit $u"
-    fi
-done
-
-# Older images installed their own polkit action under /etc. It survives
-# rebases and shadows the vendor action in /usr/share (same action id, but
-# the retired /opt path), which breaks pkexec's action lookup.
-if [ -f /etc/polkit-1/actions/com.tuxedocomputers.tccd.policy ]; then
-    rm -f /etc/polkit-1/actions/com.tuxedocomputers.tccd.policy
-    echo "Removed stale TCC polkit action"
-fi
-
-# Create/repoint the /opt symlink for Tuxedo Control Center.
-# Older images left /var/opt/tuxedo-control-center pointing at a stale payload
-# copy under /var/lib, so "create only if missing" is not enough: the symlink
-# exists but points at the wrong place.
-if [ "$(readlink -f /opt/tuxedo-control-center 2>/dev/null)" != "/usr/share/tuxedo-control-center" ]; then
-    mkdir -p /var/opt
-    ln -sfn /usr/share/tuxedo-control-center /var/opt/tuxedo-control-center
-    echo "Tuxedo Control Center linked to /opt directory"
-else
-    echo "Tuxedo symlink at /opt already correct, no fix needed"
-fi
-
-# Drop the duplicate payload older images left in /var/lib (only once /opt
-# points at /usr/share and that copy is complete).
-if [ -d /var/lib/tuxedo-control-center ] && [ ! -L /var/lib/tuxedo-control-center ] \
-   && [ -x /usr/share/tuxedo-control-center/tuxedo-control-center ]; then
-    rm -rf /var/lib/tuxedo-control-center
-    echo "Removed stale TCC payload from /var/lib"
-fi
-
-# TCC 3.1.x ships the tray autostart system-wide in /etc/xdg/autostart.
-# Users created by older images still carry a per-user copy that /etc/skel
-# dropped into ~/.config/autostart, which would start a second tray icon.
-if [ -f /etc/xdg/autostart/tuxedo-control-center-tray.desktop ]; then
-    for f in /home/*/.config/autostart/tuxedo-control-center-tray.desktop; do
-        [ -f "$f" ] || continue
-        if grep -q '/opt/tuxedo-control-center' "$f"; then
-            rm -f "$f"
-            echo "Removed stale tray autostart $f"
-        fi
-    done
-fi
-
-# TCC 3.1.x ships its launcher system-wide as com.tuxedocomputers.tcc.desktop.
-# Older images also dropped a user-local tuxedo-control-center.desktop whose
-# Exec points at the retired /var/lib payload. Both entries show up in the app
-# menu, and the user-local one launches nothing, so remove the stale duplicate.
-if [ -f /usr/share/applications/com.tuxedocomputers.tcc.desktop ]; then
-    for f in /home/*/.local/share/applications/tuxedo-control-center.desktop; do
-        [ -f "$f" ] || continue
-        rm -f "$f"
-        echo "Removed stale user launcher $f"
-    done
-fi
-
-# ============================================================
-# Remove stale tuxedo-modules.service from older images.
-# In ostree, /etc and /usr/local are persistent across rebases,
-# so build-time removal is not enough — we must also clean up
-# at runtime.
-# ============================================================
-if systemctl list-unit-files | grep -q "tuxedo-modules.service"; then
-    echo "Disabling stale tuxedo-modules.service..."
-    systemctl disable tuxedo-modules.service 2>/dev/null || true
-    systemctl mask tuxedo-modules.service 2>/dev/null || true
-    systemctl stop tuxedo-modules.service 2>/dev/null || true
-fi
-
-rm -f /etc/systemd/system/tuxedo-modules.service
-rm -f /usr/local/bin/tuxedo-load-modules.sh
-rm -rf /var/lib/tuxedo-kmods
-
-# Re-read systemd so it notices the service is gone
-systemctl daemon-reload 2>/dev/null || true
-
-# ============================================================
 # Unbind and unload the built-in uniwill_laptop module if it
 # managed to load before the blacklist took effect, then load
 # the tuxedo-drivers modules.
-# ============================================================
 WMI_DEVICE="ABBC0F72-8EA1-11D1-00A0-C90629100000-8"
 
 if lsmod | grep -q "uniwill_laptop"; then

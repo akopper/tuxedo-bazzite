@@ -1,15 +1,6 @@
-export repo_organization := env("GITHUB_REPOSITORY_OWNER", "akopper")
-export image_name := env("IMAGE_NAME", "tuxedo-bazzite")
-export default_tag := env("DEFAULT_TAG", "latest")
-export bib_image := env("BIB_IMAGE", "quay.io/centos-bootc/bootc-image-builder:latest")
-
-export SUDO_DISPLAY := if `if [ -n "${DISPLAY:-}" ] || [ -n "${WAYLAND_DISPLAY:-}" ]; then echo true; fi` == "true" { "true" } else { "false" }
-export SUDOIF := if `id -u` == "0" { "" } else { if SUDO_DISPLAY == "true" { "sudo --askpass" } else { "sudo" } }
-export PODMAN := if path_exists("/usr/bin/podman") == "true" { env("PODMAN", "/usr/bin/podman") } else { if path_exists("/usr/bin/docker") == "true" { env("PODMAN", "docker") } else { env("PODMAN", "exit 1 ; ") } }
-
-alias build-vm := build-qcow2
-alias rebuild-vm := rebuild-qcow2
-alias run-vm := run-vm-qcow2
+containerfile := "Containerfiles/bazzite-gnome-niri-nvidia/dx/Containerfile"
+image_name := "tuxedo-bazzite-gnome-niri-nvidia"
+podman_bin := if path_exists("/usr/bin/podman") == "true" { "/usr/bin/podman" } else { "docker" }
 
 [private]
 default:
@@ -19,56 +10,32 @@ default:
 [group('Just')]
 check:
     #!/usr/bin/bash
-    find . -type f -name "*.just" | while read -r file; do
-    	echo "Checking syntax: $file"
-    	just --unstable --fmt --check -f $file
-    done
-    echo "Checking syntax: Justfile"
+    set -e
+    find . -type f -name "*.just" -exec just --unstable --fmt --check -f {} \;
     just --unstable --fmt --check -f Justfile
 
 # Fix Just Syntax
 [group('Just')]
 fix:
     #!/usr/bin/bash
-    find . -type f -name "*.just" | while read -r file; do
-    	echo "Checking syntax: $file"
-    	just --unstable --fmt -f $file
-    done
-    echo "Checking syntax: Justfile"
-    just --unstable --fmt -f Justfile || { exit 1; }
+    find . -type f -name "*.just" -exec just --unstable --fmt -f {} \;
+    just --unstable --fmt -f Justfile
 
-# Clean Repo
+# Build the image locally.
+# Export AKMODS_PRIVATE_KEY_FILE and AKMODS_PUBLIC_KEY_FILE to sign the
+# kernel modules like CI does; without them the build runs unsigned
+# (kmodgenca generates an ephemeral key, modules won't load under Secure
+# Boot). Never point these at a file inside the build context.
 [group('Utility')]
-clean:
+build tag="latest":
     #!/usr/bin/bash
-    set -eoux pipefail
-    touch _build
-    find *_build* -exec rm -rf {} \;
-    rm -f previous.manifest.json
-    rm -f changelog.md
-    rm -f output.env
-
-# Sudo Clean Repo
-[group('Utility')]
-[private]
-sudo-clean:
-    ${SUDOIF} just clean
-
-build $target_image=image_name $tag=default_tag:
-    #!/usr/bin/env bash
-
-    # Get Version
-    ver="${tag}-$(date +%Y%m%d)"
-
-    BUILD_ARGS=()
-    BUILD_ARGS+=("--build-arg" "IMAGE_NAME=${image_name}")
-    BUILD_ARGS+=("--build-arg" "IMAGE_VENDOR=${repo_organization}")
-    if [[ -z "$(git status -s)" ]]; then
-        BUILD_ARGS+=("--build-arg" "SHA_HEAD_SHORT=$(git rev-parse --short HEAD)")
+    set -euo pipefail
+    args=(--pull=newer --tag "${image_name}:${tag}" -f "${containerfile}" .)
+    if [ -n "${AKMODS_PRIVATE_KEY_FILE:-}" ] && [ -n "${AKMODS_PUBLIC_KEY_FILE:-}" ]; then
+        echo "Signing kernel modules with the provided key pair"
+        args+=(--secret "id=akmods_private_key,src=${AKMODS_PRIVATE_KEY_FILE}")
+        args+=(--secret "id=akmods_public_key,src=${AKMODS_PUBLIC_KEY_FILE}")
+    else
+        echo "WARNING: AKMODS_*_KEY_FILE not set - building WITHOUT module signing"
     fi
-
-    ${PODMAN} build \
-        "${BUILD_ARGS[@]}" \
-        --pull=newer \
-        --tag "${image_name}:${tag}" \
-        .
+    "${podman_bin}" build "${args[@]}"

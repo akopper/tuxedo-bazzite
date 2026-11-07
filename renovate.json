@@ -28,7 +28,7 @@
       "automergeType": "pr"
     },
     {
-      "description": "TUXEDO drivers and pinned git refs (yt6801, dictux): automerge - the image build compiles and installs them, so a broken bump fails the PR checks",
+      "description": "TUXEDO drivers and the pinned yt6801 git ref: automerge - the image build compiles and installs them, so a broken bump fails the PR checks",
       "matchDatasources": ["rpm", "git-refs"],
       "automerge": true,
       "automergeType": "pr"
@@ -37,12 +37,6 @@
       "description": "TUXEDO Control Center: never automerge - the packaging changed between 3.0.x and 3.1.x, and the TCC section in build_tuxedo.sh depends on that layout",
       "matchDatasources": ["rpm"],
       "matchDepNames": ["tuxedo-control-center"],
-      "automerge": false
-    },
-    {
-      "description": "pipx tools: automerge patch/minor only",
-      "matchDatasources": ["pypi"],
-      "matchUpdateTypes": ["major"],
       "automerge": false
     }
   ],
@@ -77,24 +71,6 @@
       "packageNameTemplate": "https://github.com/h4rm00n/yt6801-linux-driver",
       "currentValueTemplate": "main",
       "datasourceTemplate": "git-refs"
-    },
-    {
-      "customType": "regex",
-      "description": "dictux (voice dictation): pinned commit on the master branch, installed from GitHub because it is not on PyPI",
-      "managerFilePatterns": ["/^build_tuxedo\\.sh$/"],
-      "matchStrings": ["DICTUX_COMMIT=\"(?<currentDigest>[a-f0-9]{40})\""],
-      "depNameTemplate": "nitishkp001/dictux",
-      "packageNameTemplate": "https://github.com/nitishkp001/dictux",
-      "currentValueTemplate": "master",
-      "datasourceTemplate": "git-refs"
-    },
-    {
-      "customType": "regex",
-      "description": "pipx-installed PyPI tools (cptr)",
-      "managerFilePatterns": ["/^build_tuxedo\\.sh$/"],
-      "matchStrings": ["CPTR_VERSION=\"(?<currentValue>[^\"]+)\""],
-      "depNameTemplate": "cptr",
-      "datasourceTemplate": "pypi"
     }
   ]
 }

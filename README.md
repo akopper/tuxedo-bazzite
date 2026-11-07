@@ -6,16 +6,13 @@ Adds the Tuxedo kernel modules (`tuxedo_io`, `tuxedo_keyboard`, `clevo_acpi`, et
 
 ## Available Images
 
-All images are published to `ghcr.io/akopper/`:
+One image is built and published to `ghcr.io/akopper/`:
 
 | Image | Base | Description |
 |---|---|---|
-| `tuxedo-bazzite` | `bazzite:stable` | Bazzite KDE Desktop with Tuxedo drivers |
-| `tuxedo-bazzite-gnome` | `bazzite-gnome:stable` | Bazzite GNOME Desktop with Tuxedo drivers |
-| `tuxedo-bazzite-nvidia` | `bazzite-nvidia-open:stable` | Bazzite KDE with NVIDIA **open** drivers + Tuxedo drivers |
-| `tuxedo-bazzite-gnome-nvidia` | `bazzite-gnome-nvidia-open:stable` | Bazzite GNOME with NVIDIA **open** drivers + Tuxedo drivers |
-| `tuxedo-bazzite-gnome-niri` | `bazzite-gnome:stable` | Bazzite GNOME + niri (with Noctalia) + Tuxedo drivers |
-| `tuxedo-bazzite-gnome-niri-nvidia` | `bazzite-gnome-nvidia-open:stable` | Bazzite GNOME + niri (with Noctalia) + NVIDIA + Tuxedo drivers |
+| `tuxedo-bazzite-gnome-niri-nvidia` | `bazzite-gnome-nvidia-open:stable` | Bazzite GNOME + niri (with Noctalia) + NVIDIA **open** drivers + Tuxedo drivers |
+
+> Earlier variants (KDE, GNOME without niri, non-NVIDIA) were discontinued in October 2026. Tags that may still exist on ghcr are stale snapshots from that time — do not rebase to them.
 
 ## What's included
 
@@ -55,14 +52,11 @@ watch -n1 cat /sys/bus/pci/devices/0000:01:00.0/power/runtime_status
 From any Bazzite installation (or Fedora Silverblue/Kinoite with ostree):
 
 ```bash
-# GNOME + NVIDIA variant (adjust image name for your variant)
-rpm-ostree rebase ostree-unverified-registry:ghcr.io/akopper/tuxedo-bazzite-gnome-nvidia:latest
+rpm-ostree rebase ostree-unverified-registry:ghcr.io/akopper/tuxedo-bazzite-gnome-niri-nvidia:latest
 
 # Reboot
 systemctl reboot
 ```
-
-> **Other variants:** Replace `tuxedo-bazzite-gnome-nvidia` with any image name from the table above.
 
 ### 2. Enroll the MOK signing key (Secure Boot)
 
@@ -108,14 +102,14 @@ tuxedo-control-center
 Once you've verified the unsigned image works, you can switch to the cosign-signed version:
 
 ```bash
-rpm-ostree rebase ostree-image-signed:docker://ghcr.io/akopper/tuxedo-bazzite-gnome-nvidia:latest
+rpm-ostree rebase ostree-image-signed:docker://ghcr.io/akopper/tuxedo-bazzite-gnome-niri-nvidia:latest
 systemctl reboot
 ```
 
 Verify the signature:
 
 ```bash
-cosign verify --key cosign.pub ghcr.io/akopper/tuxedo-bazzite-gnome-nvidia:latest
+cosign verify --key cosign.pub ghcr.io/akopper/tuxedo-bazzite-gnome-niri-nvidia:latest
 ```
 
 ---
@@ -126,7 +120,7 @@ Bazzite's base image ships with a kernel signing key ("ublue kernel") that is en
 
 When this custom image builds on top of Bazzite, `kmodgenca` would normally generate a **new** signing key for akmods. That key is not enrolled in MOK, so the kernel rejects the modules with `Key was rejected by service`.
 
-To fix this, the build injects a **persistent key pair** (stored as GitHub repo secrets `AKMODS_PRIVATE_KEY` and `AKMODS_PUBLIC_KEY`) before installing `akmod-tuxedo-drivers`. The `akmods-ostree-post` script then builds and signs the modules with this key. The same key pair is reused on every rebuild, so it only needs to be enrolled in MOK **once** per machine.
+To fix this, the build injects a **persistent key pair** (stored as GitHub repo secrets `AKMODS_PRIVATE_KEY_B64` and `AKMODS_PUBLIC_KEY_B64`). CI writes them to temporary files and mounts them into the build via `RUN --mount=type=secret` (`--secret=...` on the CLI). The key is **never passed as a build argument**: build args are recorded in the published image's layer history, which is exactly how the previous key pair leaked in November 2026 and had to be rotated. The `akmods-ostree-post` script then builds and signs the modules with this key. The same key pair is reused on every rebuild, so it only needs to be enrolled in MOK **once** per machine.
 
 The yt6801 Ethernet driver is also manually signed with the same key using `scripts/sign-file`.
 
