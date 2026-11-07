@@ -18,6 +18,7 @@ One image is built and published to `ghcr.io/akopper/`:
 
 - **[Tuxedo Drivers](https://gitlab.com/tuxedocomputers/development/packages/tuxedo-drivers)** — kernel modules built via `akmod-tuxedo-drivers` from the Tuxedo RPM repo, signed for Secure Boot
 - **[Tuxedo Control Center](https://github.com/tuxedocomputers/tuxedo-control-center)** — GUI and `tccd` service for fan/LED/power profiles
+- **[keyd](https://github.com/rvaiya/keyd)** — system-wide Extend/nav layer (hold CapsLock or Right Alt), following DreymaR's Extend layout. Config: [`keyd/default.conf`](keyd/default.conf); layout: [`pictures/keyd-extend-layer.png`](pictures/keyd-extend-layer.png)
 - **[OpenRGB](https://openrgb.org/)** — built from a pinned upstream commit (newer than the Fedora package, which misassigns almost every key on this keyboard) with three additions: an extra HID detector for `048d:6004` (upstream only knows `048d:600b`, the Stellaris/Polaris Gen4 uses the same ITE 8291 protocol), the measured per-key LED map of the Stellaris/Polaris Gen4 (`STEPOL1XA04`), which fixes right Shift, the arrow keys, the ISO `<` key, numpad `+`/`-` and Print Screen, and a sysfs controller for the front lightbar (the TUXEDO/Uniwill EC exposes it as three monochrome LEDs). Per-key colours, effects, profiles, the lightbar colour and its animation mode work
 - **[yt6801 Ethernet Driver](https://github.com/h4rm00n/yt6801-linux-driver)** — for Motorcomm NICs (signed for Secure Boot)
 - **[niri](https://github.com/niri-wm/niri)** — scrollable-tiling Wayland compositor (niri variants only)
@@ -25,6 +26,61 @@ One image is built and published to `ghcr.io/akopper/`:
 - **dGPU rendering for external monitors** — `ujust setup-dgpu` configures niri to render on the NVIDIA dGPU, eliminating lag on external monitors wired to the dGPU (NVIDIA niri variant only)
 - **[Sunshine](https://app.lizardbyte.dev/)** — game streaming host (Moonlight), installed as an RPM with `CAP_SYS_ADMIN` so it captures via KMS. The flatpak cannot do KMS capture, and the XDG-portal path it is stuck with does not work on niri or on hybrid AMD/NVIDIA Wayland setups. Runs as the systemd user unit `sunshine.service` from `graphical-session.target`
 - Everything from upstream Bazzite
+
+## Kumiko theme (optional)
+
+A self-contained dark theme built around a custom Art-Deco / kumiko wallpaper:
+ink background, brass arch panels, a kikko (tortoise-shell) lattice and asanoha
+(hemp-leaf) stars.
+
+![Kumiko Deco wallpaper](pictures/kumiko-deco-preview.png)
+
+```bash
+ujust setup-kumiko
+```
+
+This installs the wallpaper, the `Kumiko` Noctalia palette and the pinned niri
+theme, switches Noctalia to the palette in dark mode, and adds the following
+to `~/.config/niri/config.kdl`:
+
+```kdl
+include "noctalia.kdl"
+include "theme-kumiko.kdl"
+```
+
+The theme include comes last so the brass colours survive Noctalia
+regenerating its own `noctalia.kdl`. Files:
+
+| File | Purpose |
+|---|---|
+| `niri/wallpapers/kumiko-deco.svg` | Editable wallpaper source |
+| `niri/wallpapers/kumiko-deco-3840x2160.png` | 4K render |
+| `niri/wallpapers/kumiko-deco-2560x1440.png` | Native 16:9 render |
+| `niri/wallpapers/generate_kumiko.py` | Generator (Python standard library only) |
+| `niri/palettes/Kumiko.json` | Custom Noctalia palette (dark + light) |
+| `niri/theme-kumiko.kdl` | Pinned niri focus ring, borders and tabs |
+
+To go back, remove the two includes above and run
+`noctalia msg color-scheme-set wallpaper m3-content`.
+
+## Extend/nav layer (keyd)
+
+Hold **CapsLock** or **Right Alt** for the Extend layer. Tap CapsLock for Esc, tap Right Alt for AltGr.
+
+![keyd Extend layer](pictures/keyd-extend-layer.png)
+
+- Right hand: `YUIOP` = PgUp/Home/↑/End/PgDn, `HJKL;` = Backspace/←/↓/→/Delete.
+- Cursor: `T`/`G` = ↑/↓, `,`/`.` = ←/→.
+- Mouse: `M`/`N`/`B` = left/right/middle click.
+- Wheel: `W`/`S` = up/down.
+- Editing: `Z`/`X`/`C`/`V` = undo/cut/copy/paste; `A`/`D`/`F` = Alt/Shift/Ctrl.
+- Browser/system: `E`/`R`/`\` = back/forward/favorites, `[` = Esc, `]` = Ins, `/` = Compose.
+- Media: `F1` = previous, `F2` = play/pause, `F3` = next.
+- `Space` = Enter.
+
+keyd cannot move the mouse pointer natively, so DreymaR's pointer-motion keys (`T`/`G`/`,`/`.`) are mapped to the arrow keys. `W`/`S` remain wheel up/down.
+
+If a bad config ever locks up the keyboard, press `Backspace`+`Esc`+`Enter` to stop keyd.
 
 ---
 

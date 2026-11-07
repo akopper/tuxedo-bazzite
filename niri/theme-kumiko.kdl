@@ -1,0 +1,47 @@
+// ── Kumiko ────────────────────────────────────────────────────────────────
+// A dark ink + champagne-brass niri theme built around the Kumiko Deco
+// wallpaper (niri/wallpapers/kumiko-deco.svg).
+//
+// The colours match the "Kumiko" Noctalia palette in
+// niri/palettes/Kumiko.json, but this file pins them explicitly so niri keeps
+// the look even when Noctalia runs with a different palette or in light mode.
+//
+// Include it *after* noctalia.kdl so it wins over the generated colours:
+//     include "noctalia.kdl"
+//     include "theme-kumiko.kdl"
+//
+// `ujust setup-kumiko` wires this up automatically.
+
+layout {
+    // Brass focus ring on the active window.
+    focus-ring {
+        active-color   "#d8c3a0"
+        inactive-color "#101215"
+        urgent-color   "#ffb4ab"
+    }
+
+    // Thin brass outline on every window.
+    border {
+        active-color   "#d8c3a0"
+        inactive-color "#101215"
+        urgent-color   "#ffb4ab"
+    }
+
+    // Column tab indicators.
+    tab-indicator {
+        active-color   "#d8c3a0"
+        inactive-color "#5a4a2e"
+        urgent-color   "#ffb4ab"
+    }
+
+    insert-hint {
+        color "#d8c3a080"
+    }
+}
+
+recent-windows {
+    highlight {
+        active-color "#d8c3a0"
+        urgent-color "#ffb4ab"
+    }
+}

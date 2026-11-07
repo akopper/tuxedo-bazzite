@@ -1,0 +1,108 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# ── Kumiko theme ───────────────────────────────────────────────────────────
+# Installs the Kumiko Deco wallpaper, the matching Noctalia palette and the
+# pinned niri theme, then switches Noctalia over to them.
+#
+# Re-running is safe: files are replaced, the niri include is kept exactly
+# once, and the last line of config.kdl is always the Kumiko theme include.
+
+THEME_NAME="Kumiko"
+ASSET_DIR="${KUMIKO_ASSET_DIR:-/usr/share/kumiko}"
+CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
+NIRI_DIR="$CONFIG_HOME/niri"
+NIRI_CONFIG="$NIRI_DIR/config.kdl"
+PALETTE_DIR="$CONFIG_HOME/noctalia/palettes"
+
+PICTURES_DIR="$(xdg-user-dir PICTURES 2>/dev/null || true)"
+if [ -z "$PICTURES_DIR" ] || [ "$PICTURES_DIR" = "$HOME" ]; then
+    PICTURES_DIR="$HOME/Pictures"
+fi
+WALLPAPER_DIR="$PICTURES_DIR/Wallpapers"
+WALLPAPER="$WALLPAPER_DIR/kumiko-deco.png"
+
+die() { printf 'error: %s\n' "$*" >&2; exit 1; }
+
+for f in kumiko-deco-3840x2160.png kumiko-deco-2560x1440.png kumiko-deco.svg \
+         Kumiko.json theme-kumiko.kdl; do
+    [ -f "$ASSET_DIR/$f" ] || die "missing asset $ASSET_DIR/$f"
+done
+
+# ── Install user files ─────────────────────────────────────────────────────
+mkdir -p "$WALLPAPER_DIR" "$PALETTE_DIR" "$NIRI_DIR"
+
+# The 4K render scales cleanly to every panel; keep the native one as an
+# alternative for people who want a smaller file.
+install -m 644 "$ASSET_DIR/kumiko-deco-3840x2160.png" "$WALLPAPER"
+install -m 644 "$ASSET_DIR/kumiko-deco-2560x1440.png" "$WALLPAPER_DIR/kumiko-deco-2560x1440.png"
+install -m 644 "$ASSET_DIR/kumiko-deco.svg" "$WALLPAPER_DIR/kumiko-deco.svg"
+install -m 644 "$ASSET_DIR/Kumiko.json" "$PALETTE_DIR/Kumiko.json"
+install -m 644 "$ASSET_DIR/theme-kumiko.kdl" "$NIRI_DIR/theme-kumiko.kdl"
+
+# ── Wire the theme into niri ───────────────────────────────────────────────
+# Noctalia writes noctalia.kdl when its niri template is applied. Make sure
+# that include exists first, then put our pinned theme after it, so the
+# Kumiko colours always win - also after Noctalia regenerates its file.
+touch "$NIRI_DIR/noctalia.kdl"
+
+# A user who never logged into niri before may not have a config yet.
+if [ ! -f "$NIRI_CONFIG" ]; then
+    printf 'include "/etc/niri/config.kdl"\n' >"$NIRI_CONFIG"
+fi
+
+tmp="$(mktemp "${NIRI_CONFIG}.tmp.XXXXXX")"
+trap 'rm -f "$tmp"' EXIT
+
+if [ -f "$NIRI_CONFIG" ]; then
+    # Drop existing copies of the two theme includes; they are re-added below.
+    awk '!/^[[:space:]]*include([[:space:]].*)?"([^"]*\/)?(noctalia|theme-kumiko)\.kdl"([[:space:]]|$)/' \
+        "$NIRI_CONFIG" >"$tmp"
+else
+    : >"$tmp"
+fi
+
+# Keep the file ending in a newline before appending.
+[ -s "$tmp" ] && [ -n "$(tail -c 1 "$tmp")" ] && printf '\n' >>"$tmp"
+cat >>"$tmp" <<'EOF'
+
+// ── Kumiko theme (managed by ujust setup-kumiko) ──────────────────────────
+include "noctalia.kdl"
+include "theme-kumiko.kdl"
+EOF
+
+cat "$tmp" >"$NIRI_CONFIG"
+rm -f "$tmp"
+trap - EXIT
+
+# ── Switch Noctalia over (only possible while it is running) ──────────────
+if command -v noctalia >/dev/null 2>&1 && noctalia msg color-scheme-get >/dev/null 2>&1; then
+    noctalia msg color-scheme-set custom "$THEME_NAME" >/dev/null
+    noctalia msg theme-mode-set dark >/dev/null
+    noctalia msg wallpaper-set "$WALLPAPER" >/dev/null
+    noctalia msg templates-apply >/dev/null 2>&1 || true
+    noctalia msg config-reload >/dev/null 2>&1 || true
+    echo "Noctalia switched to the $THEME_NAME palette and wallpaper."
+else
+    echo "Noctalia is not running; finish the switch in your next session with:"
+    echo "  noctalia msg color-scheme-set custom $THEME_NAME"
+    echo "  noctalia msg theme-mode-set dark"
+    echo "  noctalia msg wallpaper-set \"$WALLPAPER\""
+fi
+
+cat <<EOF
+
+Done.
+  wallpaper  $WALLPAPER
+  palette    $PALETTE_DIR/$THEME_NAME.json
+  niri theme $NIRI_DIR/theme-kumiko.kdl
+  include    $NIRI_CONFIG
+
+Undo:
+  Keep Noctalia colours, drop only the pinned niri theme: remove
+    include "theme-kumiko.kdl"
+  from $NIRI_CONFIG
+
+  Or go back completely: remove both includes from that file and run
+    noctalia msg color-scheme-set wallpaper m3-content
+EOF

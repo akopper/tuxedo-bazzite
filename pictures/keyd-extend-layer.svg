@@ -1,0 +1,220 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="880" viewBox="0 0 1500 880" role="img" aria-label="keyd Extend layer keyboard layout">
+<defs>
+<filter id="shadow" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="2" stdDeviation="1.6" flood-color="#0f172a" flood-opacity="0.12"/></filter>
+</defs>
+<rect width="1500" height="880" fill="#f8fafc"/>
+<text x="750.0" y="52.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="36" font-weight="700" fill="#0f172a" text-anchor="middle" >keyd Extend Layer</text>
+<text x="750.0" y="90.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="18" font-weight="400" fill="#475569" text-anchor="middle" >Right-hand navigation, editing, mouse and media · hold CapsLock or Right Alt</text>
+<rect x="698.0" y="106" width="104" height="4" rx="2" fill="#3b82f6"/>
+<rect x="207.0" y="145.0" width="78.0" height="78.0" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" filter="url(#shadow)"/>
+<text x="246.0" y="191.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="20" font-weight="500" fill="#0f172a" text-anchor="middle" >Esc</text>
+<rect x="291.0" y="145.0" width="78.0" height="78.0" rx="10" fill="#fff1f2" stroke="#fda4af" stroke-width="2" filter="url(#shadow)"/>
+<text x="302.0" y="169.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="15" font-weight="500" fill="#64748b" text-anchor="start" >F1</text>
+<text x="330.0" y="207.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="19" font-weight="700" fill="#be123c" text-anchor="middle" >Prev</text>
+<rect x="375.0" y="145.0" width="78.0" height="78.0" rx="10" fill="#fff1f2" stroke="#fda4af" stroke-width="2" filter="url(#shadow)"/>
+<text x="386.0" y="169.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="15" font-weight="500" fill="#64748b" text-anchor="start" >F2</text>
+<text x="414.0" y="207.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="12" font-weight="700" fill="#be123c" text-anchor="middle" >Play/Pause</text>
+<rect x="459.0" y="145.0" width="78.0" height="78.0" rx="10" fill="#fff1f2" stroke="#fda4af" stroke-width="2" filter="url(#shadow)"/>
+<text x="470.0" y="169.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="15" font-weight="500" fill="#64748b" text-anchor="start" >F3</text>
+<text x="498.0" y="207.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="19" font-weight="700" fill="#be123c" text-anchor="middle" >Next</text>
+<rect x="543.0" y="145.0" width="78.0" height="78.0" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" filter="url(#shadow)"/>
+<text x="582.0" y="191.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="20" font-weight="500" fill="#0f172a" text-anchor="middle" >F4</text>
+<rect x="627.0" y="145.0" width="78.0" height="78.0" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" filter="url(#shadow)"/>
+<text x="666.0" y="191.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="20" font-weight="500" fill="#0f172a" text-anchor="middle" >F5</text>
+<rect x="711.0" y="145.0" width="78.0" height="78.0" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" filter="url(#shadow)"/>
+<text x="750.0" y="191.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="20" font-weight="500" fill="#0f172a" text-anchor="middle" >F6</text>
+<rect x="795.0" y="145.0" width="78.0" height="78.0" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" filter="url(#shadow)"/>
+<text x="834.0" y="191.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="20" font-weight="500" fill="#0f172a" text-anchor="middle" >F7</text>
+<rect x="879.0" y="145.0" width="78.0" height="78.0" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" filter="url(#shadow)"/>
+<text x="918.0" y="191.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="20" font-weight="500" fill="#0f172a" text-anchor="middle" >F8</text>
+<rect x="963.0" y="145.0" width="78.0" height="78.0" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" filter="url(#shadow)"/>
+<text x="1002.0" y="191.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="20" font-weight="500" fill="#0f172a" text-anchor="middle" >F9</text>
+<rect x="1047.0" y="145.0" width="78.0" height="78.0" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" filter="url(#shadow)"/>
+<text x="1086.0" y="191.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="20" font-weight="500" fill="#0f172a" text-anchor="middle" >F10</text>
+<rect x="1131.0" y="145.0" width="78.0" height="78.0" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" filter="url(#shadow)"/>
+<text x="1170.0" y="191.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="20" font-weight="500" fill="#0f172a" text-anchor="middle" >F11</text>
+<rect x="1215.0" y="145.0" width="78.0" height="78.0" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" filter="url(#shadow)"/>
+<text x="1254.0" y="191.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="20" font-weight="500" fill="#0f172a" text-anchor="middle" >F12</text>
+<rect x="123.0" y="231.0" width="78.0" height="78.0" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" filter="url(#shadow)"/>
+<text x="162.0" y="277.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="20" font-weight="500" fill="#0f172a" text-anchor="middle" >~</text>
+<rect x="207.0" y="231.0" width="78.0" height="78.0" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" filter="url(#shadow)"/>
+<text x="246.0" y="277.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="20" font-weight="500" fill="#0f172a" text-anchor="middle" >1</text>
+<rect x="291.0" y="231.0" width="78.0" height="78.0" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" filter="url(#shadow)"/>
+<text x="330.0" y="277.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="20" font-weight="500" fill="#0f172a" text-anchor="middle" >2</text>
+<rect x="375.0" y="231.0" width="78.0" height="78.0" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" filter="url(#shadow)"/>
+<text x="414.0" y="277.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="20" font-weight="500" fill="#0f172a" text-anchor="middle" >3</text>
+<rect x="459.0" y="231.0" width="78.0" height="78.0" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" filter="url(#shadow)"/>
+<text x="498.0" y="277.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="20" font-weight="500" fill="#0f172a" text-anchor="middle" >4</text>
+<rect x="543.0" y="231.0" width="78.0" height="78.0" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" filter="url(#shadow)"/>
+<text x="582.0" y="277.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="20" font-weight="500" fill="#0f172a" text-anchor="middle" >5</text>
+<rect x="627.0" y="231.0" width="78.0" height="78.0" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" filter="url(#shadow)"/>
+<text x="666.0" y="277.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="20" font-weight="500" fill="#0f172a" text-anchor="middle" >6</text>
+<rect x="711.0" y="231.0" width="78.0" height="78.0" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" filter="url(#shadow)"/>
+<text x="750.0" y="277.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="20" font-weight="500" fill="#0f172a" text-anchor="middle" >7</text>
+<rect x="795.0" y="231.0" width="78.0" height="78.0" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" filter="url(#shadow)"/>
+<text x="834.0" y="277.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="20" font-weight="500" fill="#0f172a" text-anchor="middle" >8</text>
+<rect x="879.0" y="231.0" width="78.0" height="78.0" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" filter="url(#shadow)"/>
+<text x="918.0" y="277.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="20" font-weight="500" fill="#0f172a" text-anchor="middle" >9</text>
+<rect x="963.0" y="231.0" width="78.0" height="78.0" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" filter="url(#shadow)"/>
+<text x="1002.0" y="277.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="20" font-weight="500" fill="#0f172a" text-anchor="middle" >0</text>
+<rect x="1047.0" y="231.0" width="78.0" height="78.0" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" filter="url(#shadow)"/>
+<text x="1086.0" y="277.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="20" font-weight="500" fill="#0f172a" text-anchor="middle" >-</text>
+<rect x="1131.0" y="231.0" width="78.0" height="78.0" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" filter="url(#shadow)"/>
+<text x="1170.0" y="277.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="20" font-weight="500" fill="#0f172a" text-anchor="middle" >=</text>
+<rect x="1215.0" y="231.0" width="162.0" height="78.0" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" filter="url(#shadow)"/>
+<text x="1296.0" y="277.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="20" font-weight="500" fill="#0f172a" text-anchor="middle" >Bksp</text>
+<rect x="123.0" y="317.0" width="120.0" height="78.0" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" filter="url(#shadow)"/>
+<text x="183.0" y="363.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="20" font-weight="500" fill="#0f172a" text-anchor="middle" >Tab</text>
+<rect x="249.0" y="317.0" width="78.0" height="78.0" rx="10" fill="#eff6ff" stroke="#93c5fd" stroke-width="2" filter="url(#shadow)"/>
+<text x="260.0" y="341.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="15" font-weight="500" fill="#64748b" text-anchor="start" >Q</text>
+<text x="288.0" y="379.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="19" font-weight="700" fill="#1d4ed8" text-anchor="middle" >Esc</text>
+<rect x="333.0" y="317.0" width="78.0" height="78.0" rx="10" fill="#ecfeff" stroke="#67e8f9" stroke-width="2" filter="url(#shadow)"/>
+<text x="344.0" y="341.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="15" font-weight="500" fill="#64748b" text-anchor="start" >W</text>
+<text x="372.0" y="379.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="13.5" font-weight="700" fill="#0e7490" text-anchor="middle" >Wheel ↑</text>
+<rect x="417.0" y="317.0" width="78.0" height="78.0" rx="10" fill="#fff7ed" stroke="#fdba74" stroke-width="2" filter="url(#shadow)"/>
+<text x="428.0" y="341.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="15" font-weight="500" fill="#64748b" text-anchor="start" >E</text>
+<text x="456.0" y="379.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="19" font-weight="700" fill="#c2410c" text-anchor="middle" >Back</text>
+<rect x="501.0" y="317.0" width="78.0" height="78.0" rx="10" fill="#fff7ed" stroke="#fdba74" stroke-width="2" filter="url(#shadow)"/>
+<text x="512.0" y="341.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="15" font-weight="500" fill="#64748b" text-anchor="start" >R</text>
+<text x="540.0" y="379.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="19" font-weight="700" fill="#c2410c" text-anchor="middle" >Fwd</text>
+<rect x="585.0" y="317.0" width="78.0" height="78.0" rx="10" fill="#eff6ff" stroke="#93c5fd" stroke-width="2" filter="url(#shadow)"/>
+<text x="596.0" y="341.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="15" font-weight="500" fill="#64748b" text-anchor="start" >T</text>
+<text x="624.0" y="379.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="21" font-weight="700" fill="#1d4ed8" text-anchor="middle" >↑</text>
+<rect x="669.0" y="317.0" width="78.0" height="78.0" rx="10" fill="#eff6ff" stroke="#93c5fd" stroke-width="2" filter="url(#shadow)"/>
+<text x="680.0" y="341.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="15" font-weight="500" fill="#64748b" text-anchor="start" >Y</text>
+<text x="708.0" y="379.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="19" font-weight="700" fill="#1d4ed8" text-anchor="middle" >PgUp</text>
+<rect x="753.0" y="317.0" width="78.0" height="78.0" rx="10" fill="#eff6ff" stroke="#93c5fd" stroke-width="2" filter="url(#shadow)"/>
+<text x="764.0" y="341.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="15" font-weight="500" fill="#64748b" text-anchor="start" >U</text>
+<text x="792.0" y="379.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="19" font-weight="700" fill="#1d4ed8" text-anchor="middle" >Home</text>
+<rect x="837.0" y="317.0" width="78.0" height="78.0" rx="10" fill="#eff6ff" stroke="#93c5fd" stroke-width="2" filter="url(#shadow)"/>
+<text x="848.0" y="341.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="15" font-weight="500" fill="#64748b" text-anchor="start" >I</text>
+<text x="876.0" y="379.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="21" font-weight="700" fill="#1d4ed8" text-anchor="middle" >↑</text>
+<rect x="921.0" y="317.0" width="78.0" height="78.0" rx="10" fill="#eff6ff" stroke="#93c5fd" stroke-width="2" filter="url(#shadow)"/>
+<text x="932.0" y="341.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="15" font-weight="500" fill="#64748b" text-anchor="start" >O</text>
+<text x="960.0" y="379.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="19" font-weight="700" fill="#1d4ed8" text-anchor="middle" >End</text>
+<rect x="1005.0" y="317.0" width="78.0" height="78.0" rx="10" fill="#eff6ff" stroke="#93c5fd" stroke-width="2" filter="url(#shadow)"/>
+<text x="1016.0" y="341.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="15" font-weight="500" fill="#64748b" text-anchor="start" >P</text>
+<text x="1044.0" y="379.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="19" font-weight="700" fill="#1d4ed8" text-anchor="middle" >PgDn</text>
+<rect x="1089.0" y="317.0" width="78.0" height="78.0" rx="10" fill="#eff6ff" stroke="#93c5fd" stroke-width="2" filter="url(#shadow)"/>
+<text x="1100.0" y="341.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="15" font-weight="500" fill="#64748b" text-anchor="start" >[</text>
+<text x="1128.0" y="379.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="19" font-weight="700" fill="#1d4ed8" text-anchor="middle" >Esc</text>
+<rect x="1173.0" y="317.0" width="78.0" height="78.0" rx="10" fill="#eff6ff" stroke="#93c5fd" stroke-width="2" filter="url(#shadow)"/>
+<text x="1184.0" y="341.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="15" font-weight="500" fill="#64748b" text-anchor="start" >]</text>
+<text x="1212.0" y="379.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="19" font-weight="700" fill="#1d4ed8" text-anchor="middle" >Ins</text>
+<rect x="1257.0" y="317.0" width="120.0" height="78.0" rx="10" fill="#fff7ed" stroke="#fdba74" stroke-width="2" filter="url(#shadow)"/>
+<text x="1268.0" y="341.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="15" font-weight="500" fill="#64748b" text-anchor="start" >\</text>
+<text x="1317.0" y="379.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="19" font-weight="700" fill="#c2410c" text-anchor="middle" >Fav</text>
+<rect x="123.0" y="403.0" width="141.0" height="78.0" rx="10" fill="#fffbeb" stroke="#f59e0b" stroke-width="3" filter="url(#shadow)"/>
+<text x="134.0" y="428.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="15" font-weight="600" fill="#b45309" text-anchor="start" >Caps</text>
+<text x="193.5" y="466.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="11.5" font-weight="500" fill="#b45309" text-anchor="middle" >Esc (tap)</text>
+<rect x="216.0" y="412.0" width="38" height="18" rx="5" fill="#f59e0b"/>
+<text x="235.0" y="425.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="10" font-weight="700" fill="#ffffff" text-anchor="middle" >NAV</text>
+<rect x="270.0" y="403.0" width="78.0" height="78.0" rx="10" fill="#fefce8" stroke="#fde047" stroke-width="2" filter="url(#shadow)"/>
+<text x="281.0" y="427.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="15" font-weight="500" fill="#64748b" text-anchor="start" >A</text>
+<text x="309.0" y="465.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="19" font-weight="700" fill="#a16207" text-anchor="middle" >Alt</text>
+<rect x="354.0" y="403.0" width="78.0" height="78.0" rx="10" fill="#ecfeff" stroke="#67e8f9" stroke-width="2" filter="url(#shadow)"/>
+<text x="365.0" y="427.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="15" font-weight="500" fill="#64748b" text-anchor="start" >S</text>
+<text x="393.0" y="465.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="13.5" font-weight="700" fill="#0e7490" text-anchor="middle" >Wheel ↓</text>
+<rect x="438.0" y="403.0" width="78.0" height="78.0" rx="10" fill="#fefce8" stroke="#fde047" stroke-width="2" filter="url(#shadow)"/>
+<text x="449.0" y="427.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="15" font-weight="500" fill="#64748b" text-anchor="start" >D</text>
+<text x="477.0" y="465.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="16" font-weight="700" fill="#a16207" text-anchor="middle" >Shift</text>
+<rect x="522.0" y="403.0" width="78.0" height="78.0" rx="10" fill="#fefce8" stroke="#fde047" stroke-width="2" filter="url(#shadow)"/>
+<text x="533.0" y="427.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="15" font-weight="500" fill="#64748b" text-anchor="start" >F</text>
+<text x="561.0" y="465.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="19" font-weight="700" fill="#a16207" text-anchor="middle" >Ctrl</text>
+<rect x="606.0" y="403.0" width="78.0" height="78.0" rx="10" fill="#eff6ff" stroke="#93c5fd" stroke-width="2" filter="url(#shadow)"/>
+<text x="617.0" y="427.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="15" font-weight="500" fill="#64748b" text-anchor="start" >G</text>
+<text x="645.0" y="465.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="21" font-weight="700" fill="#1d4ed8" text-anchor="middle" >↓</text>
+<rect x="690.0" y="403.0" width="78.0" height="78.0" rx="10" fill="#eff6ff" stroke="#93c5fd" stroke-width="2" filter="url(#shadow)"/>
+<text x="701.0" y="427.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="15" font-weight="500" fill="#64748b" text-anchor="start" >H</text>
+<text x="729.0" y="465.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="19" font-weight="700" fill="#1d4ed8" text-anchor="middle" >Bksp</text>
+<rect x="774.0" y="403.0" width="78.0" height="78.0" rx="10" fill="#eff6ff" stroke="#93c5fd" stroke-width="2" filter="url(#shadow)"/>
+<text x="785.0" y="427.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="15" font-weight="500" fill="#64748b" text-anchor="start" >J</text>
+<text x="813.0" y="465.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="21" font-weight="700" fill="#1d4ed8" text-anchor="middle" >←</text>
+<rect x="858.0" y="403.0" width="78.0" height="78.0" rx="10" fill="#eff6ff" stroke="#93c5fd" stroke-width="2" filter="url(#shadow)"/>
+<text x="869.0" y="427.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="15" font-weight="500" fill="#64748b" text-anchor="start" >K</text>
+<text x="897.0" y="465.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="21" font-weight="700" fill="#1d4ed8" text-anchor="middle" >↓</text>
+<rect x="942.0" y="403.0" width="78.0" height="78.0" rx="10" fill="#eff6ff" stroke="#93c5fd" stroke-width="2" filter="url(#shadow)"/>
+<text x="953.0" y="427.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="15" font-weight="500" fill="#64748b" text-anchor="start" >L</text>
+<text x="981.0" y="465.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="21" font-weight="700" fill="#1d4ed8" text-anchor="middle" >→</text>
+<rect x="1026.0" y="403.0" width="78.0" height="78.0" rx="10" fill="#eff6ff" stroke="#93c5fd" stroke-width="2" filter="url(#shadow)"/>
+<text x="1037.0" y="427.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="15" font-weight="500" fill="#64748b" text-anchor="start" >;</text>
+<text x="1065.0" y="465.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="19" font-weight="700" fill="#1d4ed8" text-anchor="middle" >Del</text>
+<rect x="1110.0" y="403.0" width="78.0" height="78.0" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" filter="url(#shadow)"/>
+<text x="1149.0" y="449.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="20" font-weight="500" fill="#0f172a" text-anchor="middle" >Quote</text>
+<rect x="1194.0" y="403.0" width="183.0" height="78.0" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" filter="url(#shadow)"/>
+<text x="1285.5" y="449.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="20" font-weight="500" fill="#0f172a" text-anchor="middle" >Enter</text>
+<rect x="123.0" y="489.0" width="183.0" height="78.0" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" filter="url(#shadow)"/>
+<text x="214.5" y="535.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="20" font-weight="500" fill="#0f172a" text-anchor="middle" >Shift</text>
+<rect x="312.0" y="489.0" width="78.0" height="78.0" rx="10" fill="#f5f3ff" stroke="#c4b5fd" stroke-width="2" filter="url(#shadow)"/>
+<text x="323.0" y="513.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="15" font-weight="500" fill="#64748b" text-anchor="start" >Z</text>
+<text x="351.0" y="551.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="19" font-weight="700" fill="#6d28d9" text-anchor="middle" >Undo</text>
+<rect x="396.0" y="489.0" width="78.0" height="78.0" rx="10" fill="#f5f3ff" stroke="#c4b5fd" stroke-width="2" filter="url(#shadow)"/>
+<text x="407.0" y="513.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="15" font-weight="500" fill="#64748b" text-anchor="start" >X</text>
+<text x="435.0" y="551.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="19" font-weight="700" fill="#6d28d9" text-anchor="middle" >Cut</text>
+<rect x="480.0" y="489.0" width="78.0" height="78.0" rx="10" fill="#f5f3ff" stroke="#c4b5fd" stroke-width="2" filter="url(#shadow)"/>
+<text x="491.0" y="513.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="15" font-weight="500" fill="#64748b" text-anchor="start" >C</text>
+<text x="519.0" y="551.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="19" font-weight="700" fill="#6d28d9" text-anchor="middle" >Copy</text>
+<rect x="564.0" y="489.0" width="78.0" height="78.0" rx="10" fill="#f5f3ff" stroke="#c4b5fd" stroke-width="2" filter="url(#shadow)"/>
+<text x="575.0" y="513.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="15" font-weight="500" fill="#64748b" text-anchor="start" >V</text>
+<text x="603.0" y="551.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="16" font-weight="700" fill="#6d28d9" text-anchor="middle" >Paste</text>
+<rect x="648.0" y="489.0" width="78.0" height="78.0" rx="10" fill="#ecfdf5" stroke="#6ee7b7" stroke-width="2" filter="url(#shadow)"/>
+<text x="659.0" y="513.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="15" font-weight="500" fill="#64748b" text-anchor="start" >B</text>
+<text x="687.0" y="551.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="19" font-weight="700" fill="#047857" text-anchor="middle" >MMB</text>
+<rect x="732.0" y="489.0" width="78.0" height="78.0" rx="10" fill="#ecfdf5" stroke="#6ee7b7" stroke-width="2" filter="url(#shadow)"/>
+<text x="743.0" y="513.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="15" font-weight="500" fill="#64748b" text-anchor="start" >N</text>
+<text x="771.0" y="551.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="19" font-weight="700" fill="#047857" text-anchor="middle" >RMB</text>
+<rect x="816.0" y="489.0" width="78.0" height="78.0" rx="10" fill="#ecfdf5" stroke="#6ee7b7" stroke-width="2" filter="url(#shadow)"/>
+<text x="827.0" y="513.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="15" font-weight="500" fill="#64748b" text-anchor="start" >M</text>
+<text x="855.0" y="551.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="19" font-weight="700" fill="#047857" text-anchor="middle" >LMB</text>
+<rect x="900.0" y="489.0" width="78.0" height="78.0" rx="10" fill="#eff6ff" stroke="#93c5fd" stroke-width="2" filter="url(#shadow)"/>
+<text x="911.0" y="513.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="15" font-weight="500" fill="#64748b" text-anchor="start" >,</text>
+<text x="939.0" y="551.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="21" font-weight="700" fill="#1d4ed8" text-anchor="middle" >←</text>
+<rect x="984.0" y="489.0" width="78.0" height="78.0" rx="10" fill="#eff6ff" stroke="#93c5fd" stroke-width="2" filter="url(#shadow)"/>
+<text x="995.0" y="513.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="15" font-weight="500" fill="#64748b" text-anchor="start" >.</text>
+<text x="1023.0" y="551.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="21" font-weight="700" fill="#1d4ed8" text-anchor="middle" >→</text>
+<rect x="1068.0" y="489.0" width="78.0" height="78.0" rx="10" fill="#eff6ff" stroke="#93c5fd" stroke-width="2" filter="url(#shadow)"/>
+<text x="1079.0" y="513.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="15" font-weight="500" fill="#64748b" text-anchor="start" >/</text>
+<text x="1107.0" y="551.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="13.5" font-weight="700" fill="#1d4ed8" text-anchor="middle" >Compose</text>
+<rect x="1152.0" y="489.0" width="225.0" height="78.0" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" filter="url(#shadow)"/>
+<text x="1264.5" y="535.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="20" font-weight="500" fill="#0f172a" text-anchor="middle" >Shift</text>
+<rect x="123.0" y="575.0" width="99.0" height="78.0" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" filter="url(#shadow)"/>
+<text x="172.5" y="621.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="20" font-weight="500" fill="#0f172a" text-anchor="middle" >Ctrl</text>
+<rect x="228.0" y="575.0" width="99.0" height="78.0" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" filter="url(#shadow)"/>
+<text x="277.5" y="621.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="20" font-weight="500" fill="#0f172a" text-anchor="middle" >Win</text>
+<rect x="333.0" y="575.0" width="99.0" height="78.0" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" filter="url(#shadow)"/>
+<text x="382.5" y="621.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="20" font-weight="500" fill="#0f172a" text-anchor="middle" >Alt</text>
+<rect x="438.0" y="575.0" width="519.0" height="78.0" rx="10" fill="#eff6ff" stroke="#93c5fd" stroke-width="2" filter="url(#shadow)"/>
+<text x="449.0" y="599.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="15" font-weight="500" fill="#64748b" text-anchor="start" >Space</text>
+<text x="697.5" y="637.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="16" font-weight="700" fill="#1d4ed8" text-anchor="middle" >Enter</text>
+<rect x="963.0" y="575.0" width="99.0" height="78.0" rx="10" fill="#fffbeb" stroke="#f59e0b" stroke-width="3" filter="url(#shadow)"/>
+<text x="974.0" y="600.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="15" font-weight="600" fill="#b45309" text-anchor="start" >R.Alt</text>
+<text x="1012.5" y="638.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="11.5" font-weight="500" fill="#b45309" text-anchor="middle" >AltGr (tap)</text>
+<rect x="1014.0" y="584.0" width="38" height="18" rx="5" fill="#f59e0b"/>
+<text x="1033.0" y="597.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="10" font-weight="700" fill="#ffffff" text-anchor="middle" >NAV</text>
+<rect x="1068.0" y="575.0" width="99.0" height="78.0" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" filter="url(#shadow)"/>
+<text x="1117.5" y="621.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="20" font-weight="500" fill="#0f172a" text-anchor="middle" >Win</text>
+<rect x="1173.0" y="575.0" width="99.0" height="78.0" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" filter="url(#shadow)"/>
+<text x="1222.5" y="621.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="20" font-weight="500" fill="#0f172a" text-anchor="middle" >Menu</text>
+<rect x="1278.0" y="575.0" width="99.0" height="78.0" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" filter="url(#shadow)"/>
+<text x="1327.5" y="621.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="20" font-weight="500" fill="#0f172a" text-anchor="middle" >Ctrl</text>
+<rect x="123.0" y="677" width="14" height="14" rx="4" fill="#eff6ff" stroke="#93c5fd" stroke-width="2"/>
+<text x="147.0" y="690.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="15" font-weight="600" fill="#475569" text-anchor="start" >Nav &amp; system</text>
+<rect x="423.0" y="677" width="14" height="14" rx="4" fill="#ecfdf5" stroke="#6ee7b7" stroke-width="2"/>
+<text x="447.0" y="690.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="15" font-weight="600" fill="#475569" text-anchor="start" >Mouse button</text>
+<rect x="723.0" y="677" width="14" height="14" rx="4" fill="#ecfeff" stroke="#67e8f9" stroke-width="2"/>
+<text x="747.0" y="690.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="15" font-weight="600" fill="#475569" text-anchor="start" >Wheel scroll</text>
+<rect x="1023.0" y="677" width="14" height="14" rx="4" fill="#f5f3ff" stroke="#c4b5fd" stroke-width="2"/>
+<text x="1047.0" y="690.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="15" font-weight="600" fill="#475569" text-anchor="start" >Edit shortcuts</text>
+<rect x="123.0" y="709" width="14" height="14" rx="4" fill="#fff7ed" stroke="#fdba74" stroke-width="2"/>
+<text x="147.0" y="722.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="15" font-weight="600" fill="#475569" text-anchor="start" >Browser</text>
+<rect x="423.0" y="709" width="14" height="14" rx="4" fill="#fff1f2" stroke="#fda4af" stroke-width="2"/>
+<text x="447.0" y="722.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="15" font-weight="600" fill="#475569" text-anchor="start" >Media</text>
+<rect x="723.0" y="709" width="14" height="14" rx="4" fill="#fefce8" stroke="#fde047" stroke-width="2"/>
+<text x="747.0" y="722.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="15" font-weight="600" fill="#475569" text-anchor="start" >Modifier</text>
+<rect x="1023.0" y="709" width="14" height="14" rx="4" fill="#fffbeb" stroke="#f59e0b" stroke-width="2"/>
+<text x="1047.0" y="722.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="15" font-weight="600" fill="#475569" text-anchor="start" >Layer trigger</text>
+<text x="123.0" y="772.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="15" font-weight="500" fill="#475569" text-anchor="start" >Hold CapsLock or Right Alt for the layer. Tap CapsLock = Esc · tap Right Alt = AltGr.</text>
+<text x="123.0" y="798.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="15" font-weight="400" fill="#64748b" text-anchor="start" >keyd cannot move the pointer, so T/G and comma/period become the arrow keys; W/S remain wheel up/down.</text>
+<text x="123.0" y="824.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="15" font-weight="400" fill="#64748b" text-anchor="start" >Number row stays numbers; F4-F12 stay F4-F12. Space = Enter.</text>
+<text x="750.0" y="862.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="12" font-weight="400" fill="#94a3b8" text-anchor="middle" >keyd · Linux · GNOME + niri</text>
+</svg>

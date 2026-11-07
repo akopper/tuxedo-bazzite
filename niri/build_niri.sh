@@ -58,6 +58,25 @@ if [ -f /tmp/setup-dgpu ]; then
 fi
 
 # ============================================================
+# Kumiko theme (optional, `ujust setup-kumiko`)
+# ============================================================
+# Ships a self-generated Art-Deco/kumiko wallpaper, a custom Noctalia
+# palette and a pinned niri theme. Nothing is enabled by default; the
+# ujust command installs it into the user's config and switches Noctalia.
+install -D -m 755 /tmp/setup-kumiko /usr/bin/setup-kumiko
+install -D -m 644 /tmp/theme-kumiko.kdl /usr/share/kumiko/theme-kumiko.kdl
+install -D -m 644 /tmp/Kumiko.json /usr/share/kumiko/Kumiko.json
+install -D -m 644 /tmp/kumiko-deco.svg /usr/share/kumiko/kumiko-deco.svg
+install -D -m 644 /tmp/kumiko-deco-3840x2160.png /usr/share/kumiko/kumiko-deco-3840x2160.png
+install -D -m 644 /tmp/kumiko-deco-2560x1440.png /usr/share/kumiko/kumiko-deco-2560x1440.png
+cp /tmp/kumiko.just /usr/share/just/kumiko.just
+
+# Validate the theme fragment together with the system config.
+printf 'include "/etc/niri/config.kdl"\ninclude "/usr/share/kumiko/theme-kumiko.kdl"\n' >/tmp/kumiko-validate.kdl
+niri validate -c /tmp/kumiko-validate.kdl
+rm -f /tmp/kumiko-validate.kdl
+
+# ============================================================
 # Qt theming for niri session
 # ============================================================
 mkdir -p /etc/environment.d

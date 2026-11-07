@@ -29,6 +29,7 @@ COPY openrgb.service /usr/lib/systemd/user/openrgb.service
 COPY tuxedo-resume-fix /usr/libexec/tuxedo-resume-fix
 COPY tuxedo-resume-fix.service /usr/lib/systemd/system/tuxedo-resume-fix.service
 COPY tuxedo-resume-trigger /usr/lib/systemd/system-sleep/40-tuxedo-resume.sh
+COPY keyd/default.conf /etc/keyd/default.conf
 COPY build_tuxedo.sh /tmp/build_tuxedo.sh
 COPY --from=openrgb-builder /out/openrgb.rpm /tmp/openrgb.rpm
 
@@ -57,6 +58,13 @@ COPY niri/setup-noctalia /tmp/setup-noctalia
 COPY niri/noctalia.just /tmp/noctalia.just
 COPY niri/setup-dgpu /tmp/setup-dgpu
 COPY niri/dgpu.just /tmp/dgpu.just
+COPY niri/setup-kumiko /tmp/setup-kumiko
+COPY niri/kumiko.just /tmp/kumiko.just
+COPY niri/theme-kumiko.kdl /tmp/theme-kumiko.kdl
+COPY niri/palettes/Kumiko.json /tmp/Kumiko.json
+COPY niri/wallpapers/kumiko-deco.svg /tmp/kumiko-deco.svg
+COPY niri/wallpapers/kumiko-deco-3840x2160.png /tmp/kumiko-deco-3840x2160.png
+COPY niri/wallpapers/kumiko-deco-2560x1440.png /tmp/kumiko-deco-2560x1440.png
 
 RUN chmod +x /tmp/build_niri.sh && \
     /tmp/build_niri.sh

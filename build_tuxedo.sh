@@ -334,6 +334,43 @@ SUBSYSTEM=="leds", KERNEL=="lightbar_animation::status", RUN+="/usr/bin/chmod 06
 ORGBLB
 
 # ============================================================
+# keyd (Extend/nav layer, system-wide)
+# ============================================================
+# keyd is not in the Fedora repos; the alternateved COPR is the maintained
+# build. The config itself is copied in by the Containerfile to
+# /etc/keyd/default.conf. keyd creates its own virtual keyboard, so libinput
+# has to be told to treat it as internal - otherwise it is classed as an
+# external keyboard and disable-while-typing cannot suppress the touchpad
+# while typing. local-overrides.quirks is the only file libinput 1.31 reads
+# from /etc/libinput; append instead of overwriting.
+curl -fsSL -o "/etc/yum.repos.d/_copr:copr.fedorainfracloud.org:alternateved:keyd.repo" \
+    "https://copr.fedorainfracloud.org/coprs/alternateved/keyd/repo/fedora-${RELEASE}/alternateved-keyd-fedora-${RELEASE}.repo"
+curl -fsSL "https://download.copr.fedorainfracloud.org/results/alternateved/keyd/pubkey.gpg" -o /tmp/keyd.asc
+rpm --import /tmp/keyd.asc
+rm -f /tmp/keyd.asc
+
+dnf install -y keyd
+
+if [ ! -f /etc/keyd/default.conf ]; then
+    echo "ERROR: /etc/keyd/default.conf missing - did the Containerfile COPY fail?"
+    exit 1
+fi
+keyd check
+
+mkdir -p /etc/libinput
+if ! grep -q 'MatchName=keyd\*keyboard' /etc/libinput/local-overrides.quirks 2>/dev/null; then
+    cat >> /etc/libinput/local-overrides.quirks << 'KEYDQUIRK'
+
+[Serial Keyboards]
+MatchUdevType=keyboard
+MatchName=keyd*keyboard
+AttrKeyboardIntegration=internal
+KEYDQUIRK
+fi
+
+systemctl enable keyd.service
+
+# ============================================================
 # Sunshine (game streaming host)
 # ============================================================
 # Installed as an RPM rather than the flatpak, on purpose:
