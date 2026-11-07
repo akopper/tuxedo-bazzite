@@ -89,6 +89,26 @@ include "/etc/niri/config.kdl"
 // (cursor theme, noctalia autostart, blur, window rules).
 EOF
 
+# Noctalia ships a native polkit authentication agent but leaves it
+# disabled by default, because most desktops bring their own. niri does
+# not, so without an agent every pkexec action - TCC profile/settings
+# saves, prime-select, the shutdown timer - fails without ever showing a
+# password prompt. Seed the Noctalia agent as a first-login default;
+# users can still turn it off again in Settings -> Security.
+mkdir -p /usr/share/noctalia/defaults
+cat > /usr/share/noctalia/defaults/config.toml << 'EOF'
+# niri has no polkit agent of its own, so register Noctalia's built-in one.
+[shell]
+polkit_agent = true
+EOF
+
+# Fail at build time rather than at login if the schema changes.
+noctalia config validate /usr/share/noctalia/defaults/config.toml
+
+cat > /usr/share/user-tmpfiles.d/noctalia.conf << 'EOF'
+C- %h/.config/noctalia/config.toml - - - - /usr/share/noctalia/defaults/config.toml
+EOF
+
 # ============================================================
 # Remove xwaylandvideobridge (causes blank window in niri)
 # ============================================================
