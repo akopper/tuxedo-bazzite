@@ -260,6 +260,15 @@ if [ ! -f /usr/share/polkit-1/actions/com.tuxedocomputers.tccd-service.policy ];
     exit 1
 fi
 
+# pkexec resolves the target with realpath() before matching it against the
+# policy's exec.path annotation. The payload now lives in /usr/share, so the
+# shipped /opt annotation no longer matches and pkexec would fall back to the
+# generic org.freedesktop.policykit.exec action, losing TCC's
+# auth_admin_keep/allow_gui settings. Point the annotation at the canonical
+# path (TCC still calls /opt, but the symlink resolves to /usr/share).
+sed -i 's|/opt/tuxedo-control-center|/usr/share/tuxedo-control-center|g' \
+    /usr/share/polkit-1/actions/com.tuxedocomputers.tccd-service.policy
+
 # Electron needs the sandbox helper setuid (the RPM ships it 0755)
 chmod 4755 /usr/share/tuxedo-control-center/chrome-sandbox
 

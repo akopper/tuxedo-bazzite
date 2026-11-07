@@ -26,6 +26,14 @@ for u in /etc/systemd/system/tccd.service /etc/systemd/system/tccd-sleep.service
     fi
 done
 
+# Older images installed their own polkit action under /etc. It survives
+# rebases and shadows the vendor action in /usr/share (same action id, but
+# the retired /opt path), which breaks pkexec's action lookup.
+if [ -f /etc/polkit-1/actions/com.tuxedocomputers.tccd.policy ]; then
+    rm -f /etc/polkit-1/actions/com.tuxedocomputers.tccd.policy
+    echo "Removed stale TCC polkit action"
+fi
+
 # Create/repoint the /opt symlink for Tuxedo Control Center.
 # Older images left /var/opt/tuxedo-control-center pointing at a stale payload
 # copy under /var/lib, so "create only if missing" is not enough: the symlink
