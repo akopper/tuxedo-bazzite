@@ -25,6 +25,7 @@ One image is built and published to `ghcr.io/akopper/`:
 - **[Noctalia](https://noctalia.dev/)** — native C++/OpenGL ES shell for niri (niri variants only)
 - **dGPU rendering for external monitors** — `ujust setup-dgpu` configures niri to render on the NVIDIA dGPU, eliminating lag on external monitors wired to the dGPU (NVIDIA niri variant only)
 - **[Sunshine](https://app.lizardbyte.dev/)** — game streaming host (Moonlight), installed as an RPM with `CAP_SYS_ADMIN` so it captures via KMS. The flatpak cannot do KMS capture, and the XDG-portal path it is stuck with does not work on niri or on hybrid AMD/NVIDIA Wayland setups. Runs as the systemd user unit `sunshine.service` from `graphical-session.target`
+- **[Voxtype](https://voxtype.io/)** — local push-to-talk dictation from the upstream RPM, with `dotool`/`wtype`/`wl-clipboard` installed for text output. Runs on the CPU (AVX2) by default: measured on this laptop it transcribes ~2.5x faster than the Radeon 680M, and it never touches the NVIDIA dGPU. A shipped systemd user drop-in pins `VK_DRIVER_FILES`/`VK_ICD_FILENAMES` to the Mesa RADV manifest, so opting into the iGPU (`VOXTYPE_GPU=1`) still leaves the dGPU in runtime suspend. Not started by default: run `voxtype setup --download && systemctl --user enable --now voxtype.service` once per user. (Handy remains the live AppImage setup.)
 - Everything from upstream Bazzite
 
 ## Kumiko theme (optional)

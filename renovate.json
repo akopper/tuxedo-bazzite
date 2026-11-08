@@ -71,6 +71,16 @@
       "packageNameTemplate": "https://github.com/h4rm00n/yt6801-linux-driver",
       "currentValueTemplate": "main",
       "datasourceTemplate": "git-refs"
+    },
+    {
+      "customType": "regex",
+      "description": "Voxtype voice-to-text RPM (upstream GitHub releases, tags are v-prefixed). The RPM bundles all GPU backends; check the install size and the CPU-by-default / RADV-pin section in build_tuxedo.sh when bumping a major/minor version.",
+      "managerFilePatterns": ["/^build_tuxedo\\.sh$/"],
+      "matchStrings": ["VOXTYPE_VERSION=\"(?<currentValue>[^\"]+)\""],
+      "depNameTemplate": "peteonrails/voxtype",
+      "datasourceTemplate": "github-releases",
+      "versioningTemplate": "semver",
+      "extractVersionTemplate": "^v(?<version>.+)$"
     }
   ]
 }

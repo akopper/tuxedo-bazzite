@@ -436,6 +436,50 @@ ln -sf /usr/lib/systemd/user/app-dev.lizardbyte.app.Sunshine.service \
 ln -sf /usr/lib/systemd/user/app-dev.lizardbyte.app.Sunshine.service \
     /etc/systemd/user/sunshine.service
 
+# ============================================================
+# Voxtype (local push-to-talk dictation)
+# ============================================================
+# Shipped from the upstream RPM (Fedora build, glibc 2.39+) because it bundles
+# the Vulkan/ONNX backends, the OSD helper and a systemd user unit. That makes
+# the package large (~700 MB installed, all GPU variants), but the alternative
+# would be extracting single binaries out of it by hand.
+#
+# Typing backends: dotool understands XKB layouts, which is what German
+# umlauts need; wtype is the wlroots virtual-keyboard path and wl-clipboard
+# is the fallback when typing fails.
+VOXTYPE_VERSION="1.1.1"          # tracked by Renovate (renovate.json)
+curl -fsSL -o /tmp/voxtype.rpm \
+    "https://github.com/peteonrails/voxtype/releases/download/v${VOXTYPE_VERSION}/voxtype-${VOXTYPE_VERSION}-1.x86_64.rpm"
+dnf install -y /tmp/voxtype.rpm dotool wtype wl-clipboard vulkan-loader
+rm -f /tmp/voxtype.rpm
+
+# Keep the RPM's CPU-adaptive wrapper as /usr/bin/voxtype. Measured on this
+# laptop (Ryzen 9 6900HX vs Radeon 680M, whisper.cpp large-v3-turbo) the CPU
+# path is ~2.5x faster than the iGPU, and it cannot wake the NVIDIA dGPU at
+# all. `voxtype setup gpu --enable` would replace the wrapper with the Vulkan
+# binary globally - do not run it. To opt into the iGPU for one user, set
+# VOXTYPE_GPU=1 in a user drop-in; the drop-in below pins Vulkan to RADV, so
+# even then only the AMD device is enumerated.
+
+# Keep the NVIDIA dGPU in runtime suspend. The Vulkan loader enumerates every
+# ICD in /usr/share/vulkan/icd.d on startup, and merely loading the NVIDIA ICD
+# powers the dGPU up. Pinning Vulkan to the Mesa RADV manifest means any
+# GPU-accelerated run only ever sees the 680M; if Vulkan init fails whisper.cpp
+# falls back to the CPU backend. Both spellings are set because Mesa < 24.1
+# only reads VK_ICD_FILENAMES while >= 24.1 prefers VK_DRIVER_FILES.
+mkdir -p /usr/lib/systemd/user/voxtype.service.d
+cat > /usr/lib/systemd/user/voxtype.service.d/10-igpu-only.conf << 'VOXIGPU'
+[Service]
+Environment=VK_DRIVER_FILES=/usr/share/vulkan/icd.d/radeon_icd.x86_64.json
+Environment=VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/radeon_icd.x86_64.json
+VOXIGPU
+
+# Deliberately NOT enabling voxtype.service globally: the daemon needs a
+# per-user model download first and would otherwise restart-loop for every
+# user. Per-user setup after the rebase:
+#   voxtype setup --download
+#   systemctl --user enable --now voxtype.service
+
 # Drop package-manager caches: they bloat the image and make bootc lint
 # complain about non-cache content in /var.
 dnf clean all
