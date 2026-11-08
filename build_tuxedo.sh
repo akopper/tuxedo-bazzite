@@ -450,7 +450,12 @@ ln -sf /usr/lib/systemd/user/app-dev.lizardbyte.app.Sunshine.service \
 VOXTYPE_VERSION="1.1.1"          # tracked by Renovate (renovate.json)
 curl -fsSL -o /tmp/voxtype.rpm \
     "https://github.com/peteonrails/voxtype/releases/download/v${VOXTYPE_VERSION}/voxtype-${VOXTYPE_VERSION}-1.x86_64.rpm"
-dnf install -y /tmp/voxtype.rpm dotool wtype wl-clipboard vulkan-loader
+dnf install -y /tmp/voxtype.rpm wtype wl-clipboard vulkan-loader
+# dotool's %post runs `udevadm control --reload`/`udevadm trigger`, which fail
+# inside the build container (no udev, read-only sysfs) and abort the whole RPM
+# transaction. The shipped udev rules are applied by systemd-udevd at boot, so
+# install it without scriptlets.
+dnf install -y --setopt=tsflags=noscripts dotool
 rm -f /tmp/voxtype.rpm
 
 # Keep the RPM's CPU-adaptive wrapper as /usr/bin/voxtype. Measured on this
