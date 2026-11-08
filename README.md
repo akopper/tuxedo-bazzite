@@ -69,7 +69,7 @@ Hold **CapsLock** or **Right Alt** for the Extend layer. Tap CapsLock for Esc, t
 
 ![keyd Extend layer](pictures/keyd-extend-layer.png)
 
-- Right hand: `YUIOP` = PgUp/Home/↑/End/PgDn, `HJKL;` = Backspace/←/↓/→/Delete.
+- Right hand: `YUIOP` = PgUp/Home/↑/End/Delete, `HJKL;` = PgDn/←/↓/→/Backspace.
 - Cursor: `T`/`G` = ↑/↓, `,`/`.` = ←/→.
 - Mouse: `M`/`N`/`B` = left/right/middle click.
 - Wheel: `W`/`S` = up/down.

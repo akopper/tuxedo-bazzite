@@ -94,7 +94,7 @@
 <text x="960.0" y="379.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="19" font-weight="700" fill="#1d4ed8" text-anchor="middle" >End</text>
 <rect x="1005.0" y="317.0" width="78.0" height="78.0" rx="10" fill="#eff6ff" stroke="#93c5fd" stroke-width="2" filter="url(#shadow)"/>
 <text x="1016.0" y="341.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="15" font-weight="500" fill="#64748b" text-anchor="start" >P</text>
-<text x="1044.0" y="379.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="19" font-weight="700" fill="#1d4ed8" text-anchor="middle" >PgDn</text>
+<text x="1044.0" y="379.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="19" font-weight="700" fill="#1d4ed8" text-anchor="middle" >Del</text>
 <rect x="1089.0" y="317.0" width="78.0" height="78.0" rx="10" fill="#eff6ff" stroke="#93c5fd" stroke-width="2" filter="url(#shadow)"/>
 <text x="1100.0" y="341.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="15" font-weight="500" fill="#64748b" text-anchor="start" >[</text>
 <text x="1128.0" y="379.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="19" font-weight="700" fill="#1d4ed8" text-anchor="middle" >Esc</text>
@@ -126,7 +126,7 @@
 <text x="645.0" y="465.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="21" font-weight="700" fill="#1d4ed8" text-anchor="middle" >↓</text>
 <rect x="690.0" y="403.0" width="78.0" height="78.0" rx="10" fill="#eff6ff" stroke="#93c5fd" stroke-width="2" filter="url(#shadow)"/>
 <text x="701.0" y="427.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="15" font-weight="500" fill="#64748b" text-anchor="start" >H</text>
-<text x="729.0" y="465.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="19" font-weight="700" fill="#1d4ed8" text-anchor="middle" >Bksp</text>
+<text x="729.0" y="465.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="19" font-weight="700" fill="#1d4ed8" text-anchor="middle" >PgDn</text>
 <rect x="774.0" y="403.0" width="78.0" height="78.0" rx="10" fill="#eff6ff" stroke="#93c5fd" stroke-width="2" filter="url(#shadow)"/>
 <text x="785.0" y="427.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="15" font-weight="500" fill="#64748b" text-anchor="start" >J</text>
 <text x="813.0" y="465.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="21" font-weight="700" fill="#1d4ed8" text-anchor="middle" >←</text>
@@ -138,7 +138,7 @@
 <text x="981.0" y="465.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="21" font-weight="700" fill="#1d4ed8" text-anchor="middle" >→</text>
 <rect x="1026.0" y="403.0" width="78.0" height="78.0" rx="10" fill="#eff6ff" stroke="#93c5fd" stroke-width="2" filter="url(#shadow)"/>
 <text x="1037.0" y="427.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="15" font-weight="500" fill="#64748b" text-anchor="start" >;</text>
-<text x="1065.0" y="465.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="19" font-weight="700" fill="#1d4ed8" text-anchor="middle" >Del</text>
+<text x="1065.0" y="465.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="19" font-weight="700" fill="#1d4ed8" text-anchor="middle" >Bksp</text>
 <rect x="1110.0" y="403.0" width="78.0" height="78.0" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" filter="url(#shadow)"/>
 <text x="1149.0" y="449.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="20" font-weight="500" fill="#0f172a" text-anchor="middle" >Quote</text>
 <rect x="1194.0" y="403.0" width="183.0" height="78.0" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" filter="url(#shadow)"/>
@@ -214,7 +214,7 @@
 <rect x="1023.0" y="709" width="14" height="14" rx="4" fill="#fffbeb" stroke="#f59e0b" stroke-width="2"/>
 <text x="1047.0" y="722.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="15" font-weight="600" fill="#475569" text-anchor="start" >Layer trigger</text>
 <text x="123.0" y="772.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="15" font-weight="500" fill="#475569" text-anchor="start" >Hold CapsLock or Right Alt for the layer. Tap CapsLock = Esc · tap Right Alt = AltGr.</text>
-<text x="123.0" y="798.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="15" font-weight="400" fill="#64748b" text-anchor="start" >keyd cannot move the pointer, so T/G and comma/period become the arrow keys; W/S remain wheel up/down.</text>
+<text x="123.0" y="798.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="15" font-weight="400" fill="#64748b" text-anchor="start" >Standard DreymaR cluster: Y/H = PgUp/PgDn, U/O = Home/End, P = Del, ; = Backspace. keyd cannot move the pointer, so T/G/,/. stay arrows.</text>
 <text x="123.0" y="824.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="15" font-weight="400" fill="#64748b" text-anchor="start" >Number row stays numbers; F4-F12 stay F4-F12. Space = Enter.</text>
 <text x="750.0" y="862.0" font-family="Noto Sans, Liberation Sans, sans-serif" font-size="12" font-weight="400" fill="#94a3b8" text-anchor="middle" >keyd · Linux · GNOME + niri</text>
 </svg>

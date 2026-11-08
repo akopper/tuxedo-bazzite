@@ -89,7 +89,7 @@ rows = [
         ("U", 1, "Home", "nav"),
         ("I", 1, "↑", "nav"),
         ("O", 1, "End", "nav"),
-        ("P", 1, "PgDn", "nav"),
+        ("P", 1, "Del", "nav"),
         ("[", 1, "Esc", "nav"),
         ("]", 1, "Ins", "nav"),
         ("\\", 1.5, "Fav", "browser"),
@@ -101,11 +101,11 @@ rows = [
         ("D", 1, "Shift", "mod"),
         ("F", 1, "Ctrl", "mod"),
         ("G", 1, "↓", "nav"),
-        ("H", 1, "Bksp", "nav"),
+        ("H", 1, "PgDn", "nav"),
         ("J", 1, "←", "nav"),
         ("K", 1, "↓", "nav"),
         ("L", 1, "→", "nav"),
-        (";", 1, "Del", "nav"),
+        (";", 1, "Bksp", "nav"),
         ("Quote", 1, None, "normal"),
         ("Enter", 2.25, None, "normal"),
     ],
@@ -275,7 +275,7 @@ for i, (kind, label) in enumerate(legend):
 # Notes
 notes = [
     "Hold CapsLock or Right Alt for the layer. Tap CapsLock = Esc · tap Right Alt = AltGr.",
-    "keyd cannot move the pointer, so T/G and comma/period become the arrow keys; W/S remain wheel up/down.",
+    "Standard DreymaR cluster: Y/H = PgUp/PgDn, U/O = Home/End, P = Del, ; = Backspace. keyd cannot move the pointer, so T/G/,/. stay arrows.",
     "Number row stays numbers; F4-F12 stay F4-F12. Space = Enter.",
 ]
 for i, note in enumerate(notes):
