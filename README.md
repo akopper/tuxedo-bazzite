@@ -31,8 +31,9 @@ One image is built and published to `ghcr.io/akopper/`:
 ## Kumiko theme (optional)
 
 A self-contained dark theme built around a custom Art-Deco / kumiko wallpaper:
-ink background, brass arch panels, a kikko (tortoise-shell) lattice and asanoha
-(hemp-leaf) stars.
+ink background, brass arch panels, a kikko (tortoise-shell) background lattice
+and a cream asanoha medallion with long rays inside each arch. The preview
+variants below include kagome, asanoha lattice and an all-cream version.
 
 ![Kumiko Deco wallpaper](pictures/kumiko-deco-preview.png)
 
@@ -40,17 +41,51 @@ ink background, brass arch panels, a kikko (tortoise-shell) lattice and asanoha
 ujust setup-kumiko
 ```
 
-This installs the wallpaper, the `Kumiko` Noctalia palette and the pinned niri
-theme, switches Noctalia to the palette in dark mode, and adds the following
-to `~/.config/niri/config.kdl`:
+This installs the wallpaper and the `Kumiko` Noctalia palette, switches
+Noctalia to the palette in dark mode, and ensures `~/.config/niri/config.kdl`
+contains:
 
 ```kdl
 include "noctalia.kdl"
-include "theme-kumiko.kdl"
 ```
 
-The theme include comes last so the brass colours survive Noctalia
-regenerating its own `noctalia.kdl`. Files:
+Noctalia's niri template generates the window colours (focus ring, borders,
+tab indicator) in `noctalia.kdl`; no separate theme fragment is pinned.
+
+### Bar and app windows
+
+- The bar text and icons are pinned to cream `#e8e2d8`, not to a palette role.
+  The wallpaper is always dark, and the light-mode `on_surface` role would
+  otherwise render near-black text.
+- GTK3/GTK4 app templates are enabled and kept on `adw-gtk3-dark` with
+  `color-scheme=prefer-dark`.
+- A small Noctalia `theme_mode_changed` hook updates both keys through `dconf`,
+  because Noctalia does not update `color-scheme` on runtime mode changes.
+
+### Palette format
+
+`niri/palettes/Kumiko.json` uses Noctalia's format 1 (the `m`-prefixed keys
+such as `mPrimary` and `mOnSurface`). Format 2 is the current format, but
+Noctalia 5.4.1's live template engine resolves all `on_*` roles from a format 2
+custom palette to `#000000`. Format 1 works in both the CLI renderer and the
+live engine, so it stays until that bug is fixed upstream.
+
+### Wallpaper variations
+
+The shipped wallpaper is the asanoha medallion version. Preview renders of the
+other motifs live in `pictures/`:
+
+![Kumiko wallpaper variations](pictures/kumiko-variations.png)
+
+| Preview | Motif |
+|---|---|
+| `pictures/kumiko-var-asanoha.png` | Continuous asanoha lattice with radiating spokes |
+| `pictures/kumiko-var-medallion.png` | Asanoha medallion with long rays inside each arch (shipped) |
+| `pictures/kumiko-var-kagome.png` | Kagome triangular lattice |
+| `pictures/kumiko-var-hybrid.png` | Asanoha above, kagome below |
+| `pictures/kumiko-var-cream.png` | All-cream variant without brass arches |
+
+Files:
 
 | File | Purpose |
 |---|---|
@@ -58,10 +93,14 @@ regenerating its own `noctalia.kdl`. Files:
 | `niri/wallpapers/kumiko-deco-3840x2160.png` | 4K render |
 | `niri/wallpapers/kumiko-deco-2560x1440.png` | Native 16:9 render |
 | `niri/wallpapers/generate_kumiko.py` | Generator (Python standard library only) |
-| `niri/palettes/Kumiko.json` | Custom Noctalia palette (dark + light) |
-| `niri/theme-kumiko.kdl` | Pinned niri focus ring, borders and tabs |
+| `niri/palettes/Kumiko.json` | Custom Noctalia palette (dark + light, format 1) |
+| `niri/setup-kumiko` | Installer run by `ujust setup-kumiko` |
 
-To go back, remove the two includes above and run
+Regenerate a wallpaper with, for example:
+`python3 niri/wallpapers/generate_kumiko.py medallion --palette brass`
+(motifs: `medallion`, `asanoha`, `kagome`, `hybrid`; palettes: `brass`, `cream`).
+
+To go back, remove the managed `include "noctalia.kdl"` block and run
 `noctalia msg color-scheme-set wallpaper m3-content`.
 
 ## Extend/nav layer (keyd)

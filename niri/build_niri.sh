@@ -39,42 +39,67 @@ cp /tmp/niri-config.kdl /etc/niri/config.kdl
 niri validate -c /etc/niri/config.kdl
 
 # ============================================================
-# setup-noctalia script + justfile command
+# ujust recipes
+# ============================================================
+# ujust evaluates /usr/share/ublue-os/justfile, which imports the optional
+# /usr/share/ublue-os/just/60-custom.just. Files in /usr/share/just are not
+# read by ujust, so custom recipes live in the ublue-os just directory and are
+# registered in 60-custom.just.
+JUST_RECIPE_DIR=/usr/share/ublue-os/just
+mkdir -p "$JUST_RECIPE_DIR"
+CUSTOM_JUST="$JUST_RECIPE_DIR/60-custom.just"
+touch "$CUSTOM_JUST"
+
+ujust_import() {
+    local name="$1"
+    grep -qxF "import \"$JUST_RECIPE_DIR/$name.just\"" "$CUSTOM_JUST" ||
+        printf 'import "%s/%s.just"\n' "$JUST_RECIPE_DIR" "$name" >>"$CUSTOM_JUST"
+}
+
+# ============================================================
+# setup-noctalia script + ujust recipe
 # ============================================================
 install -D -m 755 /tmp/setup-noctalia /usr/bin/setup-noctalia
-
-mkdir -p /usr/share/just
-cp /tmp/noctalia.just /usr/share/just/noctalia.just
+install -m 644 /tmp/noctalia.just "$JUST_RECIPE_DIR/noctalia.just"
+ujust_import noctalia
 
 # ============================================================
-# setup-dgpu script + justfile command (NVIDIA variants only)
+# setup-dgpu script + ujust recipe (NVIDIA variants only)
 # Configures niri to render on the dGPU to eliminate lag on
 # external monitors wired to the dGPU.
 # Only installed when the files are present (NVIDIA niri variant).
 # ============================================================
 if [ -f /tmp/setup-dgpu ]; then
     install -D -m 755 /tmp/setup-dgpu /usr/bin/setup-dgpu
-    cp /tmp/dgpu.just /usr/share/just/dgpu.just
+    install -m 644 /tmp/dgpu.just "$JUST_RECIPE_DIR/dgpu.just"
+    ujust_import dgpu
 fi
 
 # ============================================================
 # Kumiko theme (optional, `ujust setup-kumiko`)
 # ============================================================
-# Ships a self-generated Art-Deco/kumiko wallpaper, a custom Noctalia
-# palette and a pinned niri theme. Nothing is enabled by default; the
-# ujust command installs it into the user's config and switches Noctalia.
+# Ships a self-generated Art-Deco/kumiko wallpaper and a custom
+# Noctalia palette. Nothing is enabled by default; the ujust
+# command installs it into the user's config and switches Noctalia.
 install -D -m 755 /tmp/setup-kumiko /usr/bin/setup-kumiko
-install -D -m 644 /tmp/theme-kumiko.kdl /usr/share/kumiko/theme-kumiko.kdl
 install -D -m 644 /tmp/Kumiko.json /usr/share/kumiko/Kumiko.json
 install -D -m 644 /tmp/kumiko-deco.svg /usr/share/kumiko/kumiko-deco.svg
 install -D -m 644 /tmp/kumiko-deco-3840x2160.png /usr/share/kumiko/kumiko-deco-3840x2160.png
 install -D -m 644 /tmp/kumiko-deco-2560x1440.png /usr/share/kumiko/kumiko-deco-2560x1440.png
-cp /tmp/kumiko.just /usr/share/just/kumiko.just
+install -m 644 /tmp/kumiko.just "$JUST_RECIPE_DIR/kumiko.just"
+ujust_import kumiko
 
-# Validate the theme fragment together with the system config.
-printf 'include "/etc/niri/config.kdl"\ninclude "/usr/share/kumiko/theme-kumiko.kdl"\n' >/tmp/kumiko-validate.kdl
-niri validate -c /tmp/kumiko-validate.kdl
-rm -f /tmp/kumiko-validate.kdl
+# Fail the build if ujust would not see the custom recipes.
+just --justfile /usr/share/ublue-os/justfile --list >/tmp/ujust-recipes.txt
+for recipe in setup-noctalia setup-kumiko; do
+    grep -qw "$recipe" /tmp/ujust-recipes.txt ||
+        { echo "ujust recipe missing: $recipe" >&2; exit 1; }
+done
+if [ -f /tmp/setup-dgpu ]; then
+    grep -qw setup-dgpu /tmp/ujust-recipes.txt ||
+        { echo "ujust recipe missing: setup-dgpu" >&2; exit 1; }
+fi
+rm -f /tmp/ujust-recipes.txt
 
 # ============================================================
 # Qt theming for niri session

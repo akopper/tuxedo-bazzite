@@ -60,7 +60,6 @@ COPY niri/setup-dgpu /tmp/setup-dgpu
 COPY niri/dgpu.just /tmp/dgpu.just
 COPY niri/setup-kumiko /tmp/setup-kumiko
 COPY niri/kumiko.just /tmp/kumiko.just
-COPY niri/theme-kumiko.kdl /tmp/theme-kumiko.kdl
 COPY niri/palettes/Kumiko.json /tmp/Kumiko.json
 COPY niri/wallpapers/kumiko-deco.svg /tmp/kumiko-deco.svg
 COPY niri/wallpapers/kumiko-deco-3840x2160.png /tmp/kumiko-deco-3840x2160.png
