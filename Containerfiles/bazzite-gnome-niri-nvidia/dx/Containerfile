@@ -58,12 +58,6 @@ COPY niri/setup-noctalia /tmp/setup-noctalia
 COPY niri/noctalia.just /tmp/noctalia.just
 COPY niri/setup-dgpu /tmp/setup-dgpu
 COPY niri/dgpu.just /tmp/dgpu.just
-COPY niri/setup-kumiko /tmp/setup-kumiko
-COPY niri/kumiko.just /tmp/kumiko.just
-COPY niri/palettes/Kumiko.json /tmp/Kumiko.json
-COPY niri/wallpapers/kumiko-deco.svg /tmp/kumiko-deco.svg
-COPY niri/wallpapers/kumiko-deco-3840x2160.png /tmp/kumiko-deco-3840x2160.png
-COPY niri/wallpapers/kumiko-deco-2560x1440.png /tmp/kumiko-deco-2560x1440.png
 
 RUN chmod +x /tmp/build_niri.sh && \
     /tmp/build_niri.sh

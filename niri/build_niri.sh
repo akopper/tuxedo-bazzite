@@ -75,26 +75,10 @@ if [ -f /tmp/setup-dgpu ]; then
     ujust_import dgpu
 fi
 
-# ============================================================
-# Kumiko theme (optional, `ujust setup-kumiko`)
-# ============================================================
-# Ships a self-generated Art-Deco/kumiko wallpaper and a custom
-# Noctalia palette. Nothing is enabled by default; the ujust
-# command installs it into the user's config and switches Noctalia.
-install -D -m 755 /tmp/setup-kumiko /usr/bin/setup-kumiko
-install -D -m 644 /tmp/Kumiko.json /usr/share/kumiko/Kumiko.json
-install -D -m 644 /tmp/kumiko-deco.svg /usr/share/kumiko/kumiko-deco.svg
-install -D -m 644 /tmp/kumiko-deco-3840x2160.png /usr/share/kumiko/kumiko-deco-3840x2160.png
-install -D -m 644 /tmp/kumiko-deco-2560x1440.png /usr/share/kumiko/kumiko-deco-2560x1440.png
-install -m 644 /tmp/kumiko.just "$JUST_RECIPE_DIR/kumiko.just"
-ujust_import kumiko
-
 # Fail the build if ujust would not see the custom recipes.
 just --justfile /usr/share/ublue-os/justfile --list >/tmp/ujust-recipes.txt
-for recipe in setup-noctalia setup-kumiko; do
-    grep -qw "$recipe" /tmp/ujust-recipes.txt ||
-        { echo "ujust recipe missing: $recipe" >&2; exit 1; }
-done
+grep -qw setup-noctalia /tmp/ujust-recipes.txt ||
+    { echo "ujust recipe missing: setup-noctalia" >&2; exit 1; }
 if [ -f /tmp/setup-dgpu ]; then
     grep -qw setup-dgpu /tmp/ujust-recipes.txt ||
         { echo "ujust recipe missing: setup-dgpu" >&2; exit 1; }
