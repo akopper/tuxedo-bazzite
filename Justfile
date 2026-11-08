@@ -30,7 +30,7 @@ fix:
 build tag="latest":
     #!/usr/bin/bash
     set -euo pipefail
-    args=(--pull=newer --tag "${image_name}:${tag}" -f "${containerfile}" .)
+    args=(--pull=newer --tag "{{ image_name }}:{{ tag }}" -f "{{ containerfile }}" .)
     if [ -n "${AKMODS_PRIVATE_KEY_FILE:-}" ] && [ -n "${AKMODS_PUBLIC_KEY_FILE:-}" ]; then
         echo "Signing kernel modules with the provided key pair"
         args+=(--secret "id=akmods_private_key,src=${AKMODS_PRIVATE_KEY_FILE}")
@@ -38,4 +38,4 @@ build tag="latest":
     else
         echo "WARNING: AKMODS_*_KEY_FILE not set - building WITHOUT module signing"
     fi
-    "${podman_bin}" build "${args[@]}"
+    "{{ podman_bin }}" build "${args[@]}"
