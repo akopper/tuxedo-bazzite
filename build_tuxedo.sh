@@ -447,7 +447,7 @@ ln -sf /usr/lib/systemd/user/app-dev.lizardbyte.app.Sunshine.service \
 # Typing backends: dotool understands XKB layouts, which is what German
 # umlauts need; wtype is the wlroots virtual-keyboard path and wl-clipboard
 # is the fallback when typing fails.
-VOXTYPE_VERSION="1.1.1"          # tracked by Renovate (renovate.json)
+VOXTYPE_VERSION="1.2.2"          # tracked by Renovate (renovate.json)
 curl -fsSL -o /tmp/voxtype.rpm \
     "https://github.com/peteonrails/voxtype/releases/download/v${VOXTYPE_VERSION}/voxtype-${VOXTYPE_VERSION}-1.x86_64.rpm"
 dnf install -y /tmp/voxtype.rpm wtype wl-clipboard vulkan-loader
